@@ -26,13 +26,13 @@ Secrets that NEVER go in this repo (kept in a gitignored `.env`):
 
 ## Flow 1 — Registration (mint the credential)
 
-1. User clicks "Verify to join".
-2. Frontend runs World ID through IDKit with `action: "verify-human"`. The user completes Selfie Check in the World App.
-3. World returns a zero-knowledge proof and a nullifier (an anonymous unique-human id). No personal data.
-4. Backend verifies the proof against World, and checks the nullifier is new, so one human equals one credential.
-5. Create a device passkey (WebAuthn) bound to this human. One person, one device.
-6. Assign a username and mint a pairwise DID: a different DID per app, so there is no cross-app tracking.
-7. Anchor the credential through the sealing engine (nullifier, DID, timestamp). Nothing private is stored.
+1. User signs up with Privy: email or a social login, and they get an embedded wallet. No MetaMask, no seed phrase, nothing to scare a normal person off.
+2. They hit "Verify to join". The frontend runs World ID through IDKit with `action: "verify-human"`, and they complete Selfie Check in the World App.
+3. World hands back a zero-knowledge proof and a nullifier, an anonymous unique-human id. No personal data.
+4. The backend verifies that proof against World and checks the nullifier hasn't been seen before, so one human means one credential.
+5. A device passkey (WebAuthn) is bound to this human. One person, one device.
+6. They pick a username, which is an ENS name, and I mint a pairwise DID: a different DID per app, so nobody can track them across apps.
+7. The credential is anchored through the sealing engine (nullifier, DID, timestamp). Nothing private is stored.
 
 Result: a reusable, privacy-preserving "verified human" credential.
 
@@ -68,14 +68,16 @@ This single endpoint IS the pluggable layer. The review app is simply its first 
 
 ## Tech stack (planned)
 
-- Frontend: Next.js (React), `@worldcoin/idkit`, WebAuthn for passkeys.
+- Frontend: Next.js (React), Privy for onboarding and the embedded wallet, `@worldcoin/idkit`, WebAuthn for passkeys, ENS for usernames.
 - Backend: Next.js API routes, handling World proof verification, attest, and verify.
 - Sealing: the engine's API on Base.
 - Stretch: a Graph subgraph over the attestations, and a Chainlink function in the verify path.
 
 ## Prize targets
 
-- **World** — Selfie Check (real human, abuse prevention).
+- **World** — Selfie Check (real human, abuse prevention). The one I have to win.
+- **ENS** — the username is an ENS name.
+- **Privy** — onboarding and the embedded wallet.
 - **The Graph** — a subgraph over the attestations.
 - **Chainlink** — a function in the verify path.
 - **Finalist** — a reusable primitive with a clean demo and a "works anywhere" vision.
