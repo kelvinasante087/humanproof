@@ -35,6 +35,12 @@ In progress. Building at ETHOnline 2026 (September 4 to 16).
 
 HumanProof calls my existing sealing engine as an external hosted API, the same way it calls World or any other third-party service. All application code in this repository is written from scratch during ETHOnline 2026 (September 4 to 16).
 
+## Design
+
+The brand and every screen were designed from scratch during ETHOnline 2026, from a locked direction — a deep-navy credential card, a teal verification mark, and a single indigo action — and finished in Figma. Design assets live in `/design`.
+
+Figma file: _add link_
+
 ---
 
 Kelvin Asante · Accra, Ghana
