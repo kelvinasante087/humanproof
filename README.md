@@ -31,6 +31,10 @@ Nothing personal is stored. World returns a zero-knowledge proof, not data. Onch
 
 In progress. Building at ETHOnline 2026 (September 4 to 16).
 
+## Disclosure
+
+HumanProof calls my existing sealing engine as an external hosted API, the same way it calls World or any other third-party service. All application code in this repository is written from scratch during ETHOnline 2026 (September 4 to 16).
+
 ---
 
 Kelvin Asante · Accra, Ghana
