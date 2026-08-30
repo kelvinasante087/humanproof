@@ -27,6 +27,8 @@ The demo app is a reviews product where only verified real humans can post. Ever
 
 Nothing personal is stored. World returns a zero-knowledge proof, not data. Onchain we keep only anonymous attestations. Verify and discard, by design.
 
+Signing in uses an email — a private app account (via Privy) — which is never part of the public proof. A public verification reveals only an anonymous nullifier, a timestamp, and a content hash. No name, no email, no identity.
+
 ## Status
 
 In progress. Building at ETHOnline 2026 (September 4 to 16).
