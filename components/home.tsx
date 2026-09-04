@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { LoginCard } from "@/components/login-card";
 import { WorldVerify } from "@/components/world-verify";
+import { PasskeyStep } from "@/components/passkey-step";
 
 const privyConfigured = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 
@@ -33,6 +35,9 @@ export function Home() {
 /** Uses Privy hooks — only mounted when the provider is present. */
 function AuthPanel() {
   const { ready, authenticated, user, logout } = usePrivy();
+  // Verify is per-session and ephemeral; the card owns the order so the passkey
+  // step only unlocks once the human check has passed this session.
+  const [verified, setVerified] = useState(false);
 
   if (!ready) {
     return <p className="text-muted-foreground text-sm">Loading…</p>;
@@ -73,8 +78,10 @@ function AuthPanel() {
 
         <div className="flex flex-col gap-2 border-t pt-4">
           <span className="text-sm font-medium">Prove you&apos;re human</span>
-          <WorldVerify />
+          <WorldVerify onVerified={() => setVerified(true)} />
         </div>
+
+        <PasskeyStep unlocked={verified} />
 
         <Button variant="outline" onClick={() => logout()}>
           Sign out

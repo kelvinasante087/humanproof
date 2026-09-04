@@ -35,7 +35,7 @@ type RpContext = {
 
 type Status = "idle" | "preparing" | "verifying" | "verified" | "error";
 
-export function WorldVerify() {
+export function WorldVerify({ onVerified }: { onVerified?: () => void }) {
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -78,6 +78,7 @@ export function WorldVerify() {
   function handleSuccess() {
     setStatus("verified");
     setOpen(false);
+    onVerified?.();
   }
 
   function handleError(code: IDKitErrorCodes) {
