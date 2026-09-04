@@ -14,6 +14,16 @@ hit, filed under the four topics World grades. Never invented.
 - **2026-09-04, Day 2 session start** — Day 1 (Next.js + Privy) already deployed. Began the
   World integration by reading the two installed packages' TypeScript types before writing
   any code.
+- **2026-09-04 — server signing works end-to-end.** With the real RP signing key in place,
+  `POST /api/world/sign` returns a valid `rp_context` (correct rp_id, fresh nonce, ECDSA
+  signature, 5-minute TTL). **What worked well:** the private key worked *as-is with its `0x`
+  prefix* — `signRequest` accepted it without any hex-format fiddling, and the default TTL was
+  sensible. Credit where due: the server-signing package is clean once you know it exists.
+- **2026-09-04 — blocked on sandbox access for the live proof.** Everything testable without
+  the sandbox is green (signing, env-pin guards, fail-loud paths, production build). The one
+  remaining step — a real proof through the staging Orb simulator — needs Selfie Check enabled
+  for our app, which is the separate sandbox-access form (still pending approval at time of
+  writing). So: code complete, live end-to-end run gated on an approval we don't control.
 - _(running; each milestone timestamped as we hit it)_
 
 ---
@@ -51,8 +61,14 @@ hit, filed under the four topics World grades. Never invented.
 
 ## (c) Sandbox App (states, proofs, test users, errors, edge cases)
 
-- _(pending — needs sandbox access approved; access is gated behind a form, and the only
-  in-code hint of that gate is a JSDoc "contact us to enable" note — see (a))_
+- **Access is gated behind a form with no visible status.** We have a working RP signing key
+  and can sign requests, but that does *not* grant the Selfie Check preset — that's a separate
+  sandbox-access approval. After submitting the form there's no dashboard state, ETA, or
+  acknowledgement that tells you where you are in the queue, so you can't tell "not approved
+  yet" apart from "misconfigured." A simple "access: pending / approved" indicator in the
+  Developer Portal would remove a lot of uncertainty.
+- _(more to come once access lands and we can drive real proofs / test users through the
+  simulator — states, repeat-claim behaviour, error codes)_
 
 ## (d) What was confusing, missing, broken, or hard to test
 
