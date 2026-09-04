@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoginCard } from "@/components/login-card";
+import { WorldVerify } from "@/components/world-verify";
 
 const privyConfigured = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 
@@ -69,6 +70,12 @@ function AuthPanel() {
             </span>
           </div>
         </div>
+
+        <div className="flex flex-col gap-2 border-t pt-4">
+          <span className="text-sm font-medium">Prove you&apos;re human</span>
+          <WorldVerify />
+        </div>
+
         <Button variant="outline" onClick={() => logout()}>
           Sign out
         </Button>
