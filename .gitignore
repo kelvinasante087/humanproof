@@ -19,3 +19,6 @@ build/
 # Next.js dev-generated agent guidance (re-created by `next dev`)
 AGENTS.md
 CLAUDE.md
+
+# TypeScript incremental build info
+tsconfig.tsbuildinfo
