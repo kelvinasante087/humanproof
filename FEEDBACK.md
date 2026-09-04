@@ -19,11 +19,17 @@ hit, filed under the four topics World grades. Never invented.
   signature, 5-minute TTL). **What worked well:** the private key worked *as-is with its `0x`
   prefix* — `signRequest` accepted it without any hex-format fiddling, and the default TTL was
   sensible. Credit where due: the server-signing package is clean once you know it exists.
-- **2026-09-04 — blocked on sandbox access for the live proof.** Everything testable without
-  the sandbox is green (signing, env-pin guards, fail-loud paths, production build). The one
-  remaining step — a real proof through the staging Orb simulator — needs Selfie Check enabled
-  for our app, which is the separate sandbox-access form (still pending approval at time of
-  writing). So: code complete, live end-to-end run gated on an approval we don't control.
+- **2026-09-04 — FULL PIPELINE VERIFIED END-TO-END against World's real staging API.** Signed
+  in (Privy) → opened the IDKit widget (`selfieCheckLegacy`, staging) → completed a proof in the
+  Worldcoin simulator → our `/api/world/verify` called World's live v4 verify endpoint (real
+  ~1s round-trip) → `success: true` → nullifier extracted → session cookie set → UI showed
+  "verified human." No phone, no Orb, entirely in-browser. Total time from empty repo to a
+  verified nullifier on Day 2: well under a working day (server signing + verify + widget +
+  a green run).
+- **Caveat, stated honestly:** the simulator offers no *Selfie* credential (see section c), so
+  the credential presented was **Orb**, not selfie. So what's proven is the entire integration
+  and our pipeline against the real staging verify API; the Selfie-specific credential itself
+  still needs the actual Selfie Check sandbox app (pending access) or a real phone in production.
 - _(running; each milestone timestamped as we hit it)_
 
 ---
@@ -61,24 +67,44 @@ hit, filed under the four topics World grades. Never invented.
 
 ## (c) Sandbox App (states, proofs, test users, errors, edge cases)
 
-- **Access is gated behind a form with no visible status.** We have a working RP signing key
-  and can sign requests, but that does *not* grant the Selfie Check preset — that's a separate
-  sandbox-access approval. After submitting the form there's no dashboard state, ETA, or
-  acknowledgement that tells you where you are in the queue, so you can't tell "not approved
-  yet" apart from "misconfigured." A simple "access: pending / approved" indicator in the
-  Developer Portal would remove a lot of uncertainty.
-- _(more to come once access lands and we can drive real proofs / test users through the
-  simulator — states, repeat-claim behaviour, error codes)_
+- **The simulator has no "Selfie" credential — you can't actually test Selfie Check in it.**
+  The staging simulator (at `simulator.worldcoin.org`) offers Orb, Secure Document, Document,
+  Device, and "Test Invalid Proof" — but nothing for a selfie. So for the Selfie Check track,
+  the one credential you most need to exercise is the one the simulator can't produce. We proved
+  the whole pipeline with an Orb proof instead; the actual selfie credential appears to require
+  the dedicated Selfie Check sandbox app (the pending-access TestFlight/Firebase build) or a
+  real phone in production. If the simulator is the sanctioned way to build Selfie Check without
+  a phone, it needs a Selfie option.
+- **Simulator URL differs from what the prep material implied.** The working simulator is
+  `simulator.worldcoin.org` (the widget's own "Use the simulator" link points there), not the
+  `simulator.orb.engineer` host we'd noted from reference material. Minor, but it cost a moment
+  of "which one is real."
+- **The staging simulator did NOT gate on the Selfie Check access form.** Good news worth
+  recording: with only the RP signing key (no approved sandbox access), the `selfieCheckLegacy`
+  preset still opened in staging and produced a verifiable proof end-to-end. So the access form
+  seems to gate production / the dedicated selfie sandbox app, not staging widget testing — but
+  that boundary is undocumented, and we only learned it by trying.
+- **Access is gated behind a form with no visible status.** Submitting it gives no dashboard
+  state, ETA, or acknowledgement, so you can't tell "not approved yet" from "misconfigured."
+  A simple "access: pending / approved" indicator in the Developer Portal would remove a lot of
+  uncertainty.
+- _(repeat-claim / "already verified" behaviour and error codes: to test once the selfie
+  credential is reachable — the simulator's Orb path let us complete, but we haven't yet
+  exercised the blocked-second-claim path for a selfie nullifier)_
 
 ## (d) What was confusing, missing, broken, or hard to test
 
-- **The nullifier field trap (the big one).** v4 returns the field as `nullifier`, but most docs
-  still say `nullifier_hash`. Reading the wrong key returns `undefined` *silently* — which for a
-  proof-of-human layer is catastrophic: every user would look like the same human, or a brand
-  new human each time, with no error. We wrote a defensive reader that checks `nullifier`, then
-  `nullifier_hash`, then `results[]`/`responses[]`, and throws if none is present. A silent
-  rename on the single most important field is exactly the kind of thing that needs a migration
-  note in bold.
+- **The nullifier field trap (the big one) — CONFIRMED FIRSTHAND, not just from docs.** We
+  logged the actual staging v4 verify response (structure only, never the value). It returned:
+  `{ success, action, nullifier, created_at, environment, results, message }`. The nullifier was
+  present at the top level under **`nullifier`**, and **`nullifier_hash` was `undefined`**. So an
+  integrator who follows the many docs that still say `nullifier_hash` gets `undefined` with no
+  error — catastrophic for a proof-of-human layer: every user looks like the same human, or a
+  brand-new human each time. Our defensive reader (`nullifier` → `nullifier_hash` → `results[]`
+  → `responses[]`, throw if none) hit the first path. A silent rename on the single most
+  important field needs a bold migration note at the top of the verify docs.
+- **The verify response also carries `results[]` AND a top-level `nullifier`.** Both are present,
+  which invites reading the wrong one; docs should say which is canonical.
 - **Two different shapes both called "the nullifier."** The client widget result puts the
   nullifier inside `responses[].nullifier` (a v3/v4 credential item), while the verify API
   response (per docs) surfaces it at the top level as `nullifier`. Same concept, two locations,
