@@ -68,3 +68,11 @@ hit, filed under the four topics World grades. Never invented.
   response (per docs) surfaces it at the top level as `nullifier`. Same concept, two locations,
   depending on whether you're looking at the client result or the server verify response — easy
   to conflate and trust the wrong (client-supplied) one.
+- **The verify endpoint is not in the SDK, so its exact contract is guesswork until tested.**
+  `@worldcoin/idkit` bundles no verify URL and no verify helper — the widget only fetches the
+  proof. So the server call to `developer.world.org/api/v4/verify/{rp_id}` is built purely from
+  docs/notes: we don't know for sure whether it needs an API key (we send `WORLD_API_KEY` as a
+  Bearer token only if present), what the exact success/response body looks like, or how a v3
+  Selfie Check proof rides a v4 endpoint. A first-party "verify this proof" helper (like the old
+  `verifyCloudProof`) would remove all of this guessing. Flagging now; will confirm the real
+  shape at live test and update this entry.
