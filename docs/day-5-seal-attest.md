@@ -130,3 +130,44 @@ Add to `.env.example` + `.env.local` (+ Vercel), secrets never committed, server
 3. Same human + appId + contentHash again → **409**.
 4. DB holds only the salted hash; no response body or seal payload carries the raw nullifier.
 5. `next build` green; the Vercel site stays public.
+
+---
+
+## As built (2026-09-05)
+
+Three of three carried/new pieces shipped; one plan assumption changed after verifying a real API.
+
+**Signed session cookie (Day-4 fix) — done & verified.** The verification cookie is now an
+HMAC-signed token (`lib/session.ts`, Node crypto, no new dependency). `world/verify` sets it via
+`sealSession`; `ens/claim` and `attest` read it via `readSession`. Proven through the live route by
+`scripts/seal/verify-attest.mjs`: no cookie → 401, garbage cookie → 401, tampered signature → 401,
+a correctly signed cookie → past the gate. The raw nullifier never reaches the browser.
+
+**Convex store + credential record — built; needs provisioning to run.** Schema + transactional
+mutations for `credentials` and `seals` (atomic check-then-insert). The credential write is wired
+into `ens/claim` as a best-effort mirror after the on-chain claim, storing only `salt(nullifier)`.
+Server-only client references functions by name, so the build is green before `npx convex dev`.
+
+**Seal — changed from the external engine to a native Base seal.** The plan assumed the seal went
+through the founder's hosted sealing engine (Chronos-V). Reading that engine's actual contract
+first (the house rule) showed a real mismatch: its endpoints require live device-sensor forensics
+(GPS, accelerometer, hardware id) and deliberately refuse synthetic data — they can't seal a
+lightweight action attestation, and faking sensor data would betray the engine's own design. So we
+seal **natively and from-scratch** instead: `HumanProofAttestations` on Base Sepolia anchors
+`{ salt(nullifier), contentHash, appId, timestamp }`, worker-gated, reverting `AlreadySealed` on a
+duplicate. `/attest` reserves in Convex (blocks dupes before gas), seals, and returns safe
+references only. The seal sits behind one swap-able seam (`lib/attest.sealAction`), so an adapted
+engine can replace it later without touching the route. Chronos-V stays disclosed as the production
+vision — honest related work, not a faked dependency.
+
+**To finish end-to-end (founder, one-time):**
+1. Fund the deployer address on Base Sepolia (faucet), then
+   `node --env-file=.env.local scripts/seal/01-deploy-attestations.mjs` — deploys the contract and
+   records its address.
+2. `npx convex dev` (interactive login) → set `NEXT_PUBLIC_CONVEX_URL` locally; on Vercel add
+   `CONVEX_DEPLOY_KEY` + a build command that runs `convex deploy`.
+3. Re-run `scripts/seal/verify-attest.mjs` against a running server: the valid-cookie case now
+   returns a real `txHash`, and a second identical attest returns **409**.
+
+Remaining acceptance (live seal 200 + duplicate 409) is gated only on steps 1–2 above; the gate,
+the DB logic, the contract (compiles clean, 0 warnings), and the route are all in place and green.
