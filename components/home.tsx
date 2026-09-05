@@ -13,6 +13,7 @@ import {
 import { LoginCard } from "@/components/login-card";
 import { WorldVerify } from "@/components/world-verify";
 import { PasskeyStep } from "@/components/passkey-step";
+import { NameStep } from "@/components/name-step";
 
 const privyConfigured = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 
@@ -50,6 +51,8 @@ function AuthPanel() {
   const walletAddress = user?.wallet?.address;
   const email =
     typeof user?.email?.address === "string" ? user.email.address : undefined;
+  const hasPasskey =
+    user?.linkedAccounts?.some((account) => account.type === "passkey") ?? false;
 
   return (
     <Card className="w-full max-w-sm">
@@ -82,6 +85,8 @@ function AuthPanel() {
         </div>
 
         <PasskeyStep unlocked={verified} />
+
+        <NameStep unlocked={verified && hasPasskey} address={walletAddress} />
 
         <Button variant="outline" onClick={() => logout()}>
           Sign out
