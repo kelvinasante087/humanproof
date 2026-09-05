@@ -8,6 +8,7 @@ import {
   WorldEnvironmentMismatchError,
   NullifierNotFoundError,
 } from "@/lib/world";
+import { sealSession } from "@/lib/session";
 
 /**
  * Verifies a World Selfie Check proof server-side and, on success, holds the
@@ -124,9 +125,11 @@ export async function POST(request: Request) {
   }
 
   // Session-only, locked down: httpOnly (never readable by JS), secure in prod,
-  // sameSite. The nullifier is the sensitive bit — it stays server-side.
+  // sameSite. The nullifier is the sensitive bit — it stays server-side, and the
+  // cookie value is HMAC-signed (sealSession) so a hand-crafted cookie can't forge
+  // a verified session. The raw nullifier is recoverable only server-side, via readSession.
   const jar = await cookies();
-  jar.set(WORLD_SESSION_COOKIE, nullifier, {
+  jar.set(WORLD_SESSION_COOKIE, sealSession(nullifier), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

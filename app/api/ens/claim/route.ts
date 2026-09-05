@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
+import { readSession } from "@/lib/session";
 import { claimViaRegistrar, resolveName, AlreadyClaimedError, NameUnavailableError } from "@/lib/ens/registrar";
 import { InvalidEnsNameError } from "@/lib/ens/normalize";
 
@@ -18,10 +19,11 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const jar = await cookies();
-  const nullifier = jar.get(WORLD_SESSION_COOKIE)?.value;
-  if (!nullifier) {
+  const session = readSession(jar.get(WORLD_SESSION_COOKIE)?.value);
+  if (!session) {
     return NextResponse.json({ error: "Verify you're human first." }, { status: 401 });
   }
+  const nullifier = session.nullifier;
 
   let body: { label?: unknown; address?: unknown };
   try {
