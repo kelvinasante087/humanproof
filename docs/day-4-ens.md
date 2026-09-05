@@ -143,3 +143,35 @@ app-side record Day 5's API-layer uniqueness builds on.
 A verified, passkey-bound user claims `<name>.humanproof.eth`; the claim is gated on proof-of-humanity
 (app-level for the floor, the on-chain registrar for the stretch); it **resolves on Sepolia** through
 the Universal Resolver; the salted nullifier is persisted. Build stays green; site stays public.
+
+---
+
+## As built (2026-09-05) — verified on Sepolia
+
+Both the floor and the stretch shipped, verified on-chain and through the running app.
+
+**Deployed** (owner = founder wallet `0x9028…c4`; operational signer = worker `0x2cAC…75`):
+- Parent name **`humanproof.eth`** — registered to the founder wallet, pointed at our registry + resolver.
+- Subname registry (UserRegistry proxy): `0x40fF7015340d41B00c838826037fE47dB9B57bE8`
+- Resolver (PermissionedResolver proxy): `0x1FA237087fd16e3C340F7577D59e8D614a6106e7`
+- **`HumanProofRegistrar`**: `0x18489F37F6dE05AFa970A427cF3652281cFc8d4c` (issuer `0x0dCD…a711`)
+- Live ENS v2 set + our addresses recorded in `lib/ens/deployments.sepolia.json` and `humanproof.sepolia.json`.
+
+**Floor — verified:** subname issued to the user's wallet, resolves end-to-end through
+UniversalResolverV2. `/api/ens/claim` gated on the World cookie (no cookie → 401).
+
+**Stretch — verified on-chain:** `HumanProofRegistrar.claim` mints only against an issuer-signed
+EIP-712 humanity voucher for an unused nullifier. Proven live: (1) valid voucher → mints + resolves;
+(2) reused nullifier → reverts `NullifierAlreadyUsed`; (3) non-issuer signature → reverts
+`InvalidSignature`. The live app claims through the registrar; a returning human gets 409 "already claimed".
+
+**Honesty note:** World's Selfie Check is the humanity check (off-chain). The contract enforces the
+issuer attestation + on-chain uniqueness — no World proof is faked on-chain.
+
+**Two ENS traps, caught by verifying on-chain (logged in FEEDBACK.md):** the docs deployments page
+lists a stale address set; and the canonical vanity Universal Resolver proxy reverts while
+UniversalResolverV2 resolves correctly.
+
+**Deferred:** the app-side DB record of the salted nullifier (Day 5 — the on-chain used-nullifier
+ledger already persists it for uniqueness). Live-site claiming needs the worker + issuer keys added to
+Vercel (server-only env) — a pre-demo step.
