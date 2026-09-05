@@ -118,3 +118,37 @@ hit, filed under the four topics World grades. Never invented.
   Selfie Check proof rides a v4 endpoint. A first-party "verify this proof" helper (like the old
   `verifyCloudProof`) would remove all of this guessing. Flagging now; will confirm the real
   shape at live test and update this entry.
+
+---
+---
+
+# ENS v2 — developer feedback (HumanProof)
+
+Second track, same rules: real friction only, logged while building. **Track:** Best Use of
+ENSv2 (Sepolia hackathon contracts). **Stack:** viem 2.56, `@adraffy/ens-normalize` 1.11.1.
+
+## (a) Deployments / addresses
+
+- **2026-09-05 — two conflicting ENSv2 Sepolia address sets, and the official docs page has the
+  stale one. This is the big one, and it fails silently.** `docs.ens.domains/learn/deployments`
+  (heading "Sepolia (ENSv2 Beta)") lists one set — VerifiableFactory `0x10dc…`, ETHRegistrar
+  `0xa885…`, MockUSDC `0x768f…`. The `ensdomains/contracts-v2` repo (`main`,
+  `contracts/docs/addresses/sepolia.md`) lists a **completely different** set — VerifiableFactory
+  `0x118b…`, ETHRegistrar `0xa444…`, MockUSDC `0xd332…`. **Both have live bytecode on Sepolia,**
+  so a "does this address have code?" check passes on either — you get no signal you're on the
+  wrong one. We only caught it because we read *both* sources. A builder who trusts the official
+  docs deployments page (the natural thing to do) builds their whole integration on a set the
+  **canonical Universal Resolver proxy no longer points to** — so their names won't resolve, with
+  no error anywhere.
+- **How we disambiguated (undocumented, on-chain):** the vanity Universal Resolver proxy
+  `0xeEeEEEeE…EeEe` is the one address common to both sets. We read its EIP-1967 implementation
+  slot on-chain — it currently delegates to `0x6d80F2…` (`ManagedUniversalResolverProxy`), which
+  exists **only in the contracts-repo set**. That's what proves the repo set is the live one and
+  the docs "Beta" set is stale. A hackathon builder should not have to read a proxy's storage slot
+  to find out which of two official address lists actually works.
+- **Ask:** publish ONE canonical, dated address list for the hackathon set (ideally on the ENS
+  prize page itself), and put a "⚠️ this page is out of date — current addresses here" banner on
+  the docs deployments page. Right now the two disagree with no cross-reference.
+- **Minor, same root cause:** the docs "Beta" set doesn't even list a `UserRegistryImpl`, which
+  you need as the `implementation` arg to `VerifiableFactory.deployProxy` to stand up a subname
+  registry. So the published-docs path can't do subnames from its own list; the repo set can.

@@ -1,0 +1,23 @@
+{
+  "_note": "ENS v2 Sepolia (hackathon) deployment addresses. VERIFIED on-chain 2026-09-05: every address below has bytecode on chainId 11155111. Source of truth: ensdomains/contracts-v2 main branch (contracts/docs/addresses/sepolia.md), cross-checked against the live Universal Resolver proxy 0xeEeEEEeE...EeEe, whose current implementation (0x6d80F2...ManagedUniversalResolverProxy) belongs to THIS set. The docs.ens.domains/learn/deployments 'ENSv2 Beta' page lists an OLDER, stale set (VerifiableFactory 0x10dc..., ETHRegistrar 0xa885..., MockUSDC 0x768f...) that the canonical resolver no longer points to — do NOT use it. See FEEDBACK.md.",
+  "chainId": 11155111,
+  "network": "sepolia",
+  "verifiedOn": "2026-09-05",
+  "contracts": {
+    "VerifiableFactory": "0x118bc31a50d559f7015a8da26d54b3b030cdb70f",
+    "RootRegistry": "0x11b5bfbe9078d826b1edbdd1cfc12f5828d9f50c",
+    "ETHRegistry": "0x67b728a792e789a8978b30cf1b3b641f19354b43",
+    "ETHRegistrar": "0xa4449a0dd2b83007553d9b1d28b583a46a805a30",
+    "BatchRegistrar": "0xfe2aab6df1cbff84534ce65d9e4a755ba02d6795",
+    "PermissionedResolverImpl": "0x7e4b2d59938930168024201752ee5503df402303",
+    "UserRegistryImpl": "0x840fa461059862ea466a711e8c98c8de732061c0",
+    "PublicResolverV2": "0xd25f66dd4ff61486c2c5c1e6201a23576698d3df",
+    "UniversalResolverV2": "0x85edf8b6b7d4211e2b07aa687506b746357b92cf",
+    "UpgradableUniversalResolverProxy": "0xeEeEEEeE14D718C2B47D9923Deab1335E144EeEe",
+    "ManagedUniversalResolverProxy": "0x6d80F2172CFdEc5730fE683860C33d26fC42e6F1",
+    "MockUSDC": "0xd3322b29a7bdee707d1684676f149bf41aa3422f",
+    "StandardRentPriceOracle": "0x09340d50a6489e7bfb2959acc4e32bcbc401e203"
+  },
+  "implementationContracts": ["PermissionedResolverImpl", "UserRegistryImpl"],
+  "resolveThrough": "UpgradableUniversalResolverProxy"
+}
