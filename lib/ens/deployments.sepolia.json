@@ -19,5 +19,6 @@
     "StandardRentPriceOracle": "0x09340d50a6489e7bfb2959acc4e32bcbc401e203"
   },
   "implementationContracts": ["PermissionedResolverImpl", "UserRegistryImpl"],
-  "resolveThrough": "UpgradableUniversalResolverProxy"
+  "resolveThrough": "UniversalResolverV2",
+  "resolveNote": "Resolve through UniversalResolverV2 (0x85edf8...). Verified 2026-09-05: the vanity UpgradableUniversalResolverProxy (0xeEeE...EeEe) and ManagedUniversalResolverProxy both REVERT ResolverNotFound (0x77209fe8) for v2 names, while UniversalResolverV2 resolves them correctly (findResolver returns our resolver; getEnsAddress returns the address). See FEEDBACK.md."
 }

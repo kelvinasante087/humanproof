@@ -152,3 +152,20 @@ ENSv2 (Sepolia hackathon contracts). **Stack:** viem 2.56, `@adraffy/ens-normali
 - **Minor, same root cause:** the docs "Beta" set doesn't even list a `UserRegistryImpl`, which
   you need as the `implementation` arg to `VerifiableFactory.deployProxy` to stand up a subname
   registry. So the published-docs path can't do subnames from its own list; the repo set can.
+
+## (b) Resolution / Universal Resolver
+
+- **2026-09-05 — the "canonical" vanity Universal Resolver proxy reverts; you must call
+  `UniversalResolverV2` directly.** After registering the parent and issuing a subname (every link
+  verified on-chain: root→eth→parent→subname, resolver set, `addr` record stored), resolving
+  `alice.humanproof.eth` through the vanity `UpgradableUniversalResolverProxy` (`0xeEeE…EeEe`) — the
+  address every client treats as THE resolver — reverts `ResolverNotFound` (`0x77209fe8`). So does
+  `ManagedUniversalResolverProxy`. The plain `UniversalResolverV2` (`0x85edf8…`) resolves the exact
+  same name correctly (its `findResolver` returns our resolver; `getEnsAddress` returns the
+  address). So on this deployment the upgradable/managed proxy layer isn't wired to a working
+  resolver while the underlying V2 contract is. viem's `getEnsAddress` returns `null` (not an error)
+  against the broken proxy — a silent dead-end for anyone on defaults. **Ask:** point the vanity
+  proxy at the working V2 resolver, or tell hackathon builders to resolve through `UniversalResolverV2`.
+- **Positive, credit where due:** once you call the right resolver, ENS v2 resolution "just works."
+  Our own PermissionedResolver proxy implemented ENSIP-10 `resolve()` and `supportsInterface`
+  correctly with no extra work, and the whole root→TLD→parent→subname walk resolved in a single call.
