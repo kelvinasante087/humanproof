@@ -1,0 +1,9 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "worker": "0x2cAC8fD39381E5209D0F57330B8b9fdd9FbaDA75",
+  "owner": "0x90281186c99EaC22825F60081f19A85e944779c4",
+  "parentName": "humanproof.eth",
+  "resolver": "0x1FA237087fd16e3C340F7577D59e8D614a6106e7",
+  "registry": "0x40fF7015340d41B00c838826037fE47dB9B57bE8"
+}
