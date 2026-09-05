@@ -77,3 +77,17 @@ flips to the secured state. Build stays green; deploy.
 
 **Dashboard prerequisite:** passkeys must be enabled for the app in the Privy dashboard for the
 native prompt to fire. The code is correct independent of that toggle.
+
+## Verified (2026-09-05)
+
+Ran the full flow on localhost against the real Privy app: signed in → **Verify you're human**
+(World staging simulator) → verified → **Add passkey** → Windows Hello → the card flipped to
+"Device secured — Passkey added ✓". The secured state is read from a real
+`type === 'passkey'` entry on the user's Privy account, so it's genuine and durable. Nullifier
+stayed in the session; no DB write.
+
+Prereqs that had to be set outside the code: enabling the Passkey login method in the Privy
+dashboard, and (separately) turning OFF Vercel deployment protection so the live URL is public.
+Localhost was used for the passkey test because Privy trusts it by default; the live vercel.app
+domain still needs adding to Privy's allowed origins before the passkey works there (a pre-demo
+follow-up, not a code change).
