@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
 import { readSession } from "@/lib/session";
-import { claimViaRegistrar, resolveName, AlreadyClaimedError, NameUnavailableError } from "@/lib/ens/registrar";
+import { claimViaRegistrar, resolveName, saltedNullifierHash, AlreadyClaimedError, NameUnavailableError } from "@/lib/ens/registrar";
 import { InvalidEnsNameError } from "@/lib/ens/normalize";
+import { recordCredential, dbConfigured } from "@/lib/db";
 
 /**
  * Claim <name>.humanproof.eth for the signed-in user — THROUGH the on-chain registrar.
@@ -40,6 +41,19 @@ export async function POST(request: Request) {
   try {
     const { name, txHash } = await claimViaRegistrar(label, address, nullifier);
     const resolved = await resolveName(name);
+
+    // Credential complete → record the salted nullifier hash (never the raw value) as the
+    // DB-layer half of one-human-one-credential. The on-chain registrar already enforced
+    // uniqueness, so this is a best-effort mirror: a failed write must not fail the claim the
+    // user already paid for on-chain. Skipped cleanly until Convex is provisioned.
+    if (dbConfigured()) {
+      try {
+        await recordCredential(saltedNullifierHash(nullifier).toString(), name);
+      } catch (dbErr) {
+        console.warn("[ens/claim] credential DB record skipped:", dbErr);
+      }
+    }
+
     return NextResponse.json({ name, resolved, txHash });
   } catch (err) {
     if (err instanceof InvalidEnsNameError) return NextResponse.json({ error: err.message }, { status: 400 });
