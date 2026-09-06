@@ -1,4 +1,4 @@
-import { mutation } from "./functions";
+import { mutation, query } from "./functions";
 import { v, ConvexError } from "convex/values";
 
 /**
@@ -37,5 +37,27 @@ export const release = mutation({
   args: { id: v.id("seals") },
   handler: async (ctx, { id }) => {
     await ctx.db.delete(id);
+  },
+});
+
+/**
+ * Public read for the verify page. Looks a finalized seal up by its reference and returns ONLY
+ * safe fields — the app it happened in, the action's content hash, the on-chain tx, and when.
+ * Never the nullifierHash, never anything about who. Returns null if unknown or not yet finalized.
+ */
+export const getByRef = query({
+  args: { sealRef: v.string() },
+  handler: async (ctx, { sealRef }) => {
+    const row = await ctx.db
+      .query("seals")
+      .withIndex("by_sealRef", (q) => q.eq("sealRef", sealRef))
+      .unique();
+    if (!row || !row.sealRef) return null;
+    return {
+      appId: row.appId,
+      contentHash: row.contentHash,
+      txHash: row.txHash ?? null,
+      createdAt: row.createdAt,
+    };
   },
 });

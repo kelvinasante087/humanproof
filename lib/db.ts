@@ -43,6 +43,20 @@ const finalizeSealRef = makeFunctionReference<
 
 const releaseSealRef = makeFunctionReference<"mutation", { id: string }, null>("seals:release");
 
+/** Safe, public-facing fields of a sealed action (never the nullifier). */
+export type PublicSeal = {
+  appId: string;
+  contentHash: string;
+  txHash: string | null;
+  createdAt: number;
+};
+
+const getSealByRefRef = makeFunctionReference<
+  "query",
+  { sealRef: string },
+  PublicSeal | null
+>("seals:getByRef");
+
 /** This human already has a credential recorded (DB-layer uniqueness). */
 export class AlreadyRecordedError extends Error {
   constructor() {
@@ -108,4 +122,9 @@ export async function releaseSeal(id: string): Promise<void> {
   } catch {
     // best-effort rollback; a stale reservation only blocks a re-attempt of the same action
   }
+}
+
+/** Public read for the verify page: a sealed action's safe fields by its reference, or null. */
+export async function getSealByRef(sealRef: string): Promise<PublicSeal | null> {
+  return await client().query(getSealByRefRef, { sealRef });
 }

@@ -28,5 +28,6 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_dedupe", ["dedupeKey"])
-    .index("by_nullifier", ["nullifierHash"]),
+    .index("by_nullifier", ["nullifierHash"])
+    .index("by_sealRef", ["sealRef"]), // public verify page looks a seal up by its reference
 });
