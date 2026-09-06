@@ -16,9 +16,15 @@ import { sealPublicClient, getSealWallet, ATTESTATIONS, SEAL_EXPLORER } from "./
 
 const sealAbi = parseAbi([
   "function seal(uint256 nullifierHash, bytes32 contentHash, string appId) returns (bytes32)",
+  "function isSealed(bytes32) view returns (bool)",
   "error AlreadySealed()",
   "error NotWorker()",
 ]);
+
+// 4-byte selector of AlreadySealed(). When a duplicate reverts at the write step (not simulate),
+// viem carries the request's stripped ABI and can't decode the custom error by name — so we also
+// match the raw selector as a backstop, ensuring a duplicate always maps to 409, never 502.
+const ALREADY_SEALED_SELECTOR = "0x423311c0";
 
 /** True once the attestation contract address is configured (post-deploy). */
 export function sealConfigured(): boolean {
@@ -68,6 +74,19 @@ export async function sealAction(
   appId: string,
 ): Promise<SealResult> {
   if (!ATTESTATIONS) throw new Error("Attestations contract is not configured");
+  const dedupeKey = attestDedupeKey(nullifierHash, contentHash32, appId);
+
+  // Deterministic duplicate check (read-only, no gas): a reverted duplicate tx doesn't reliably
+  // throw at simulate/write and waitForTransactionReceipt resolves even for a reverted tx — so we
+  // read the contract's public isSealed getter first. Already sealed ⇒ 409, before any gas.
+  const already = await sealPublicClient.readContract({
+    address: ATTESTATIONS,
+    abi: sealAbi,
+    functionName: "isSealed",
+    args: [dedupeKey],
+  });
+  if (already) throw new AlreadySealedOnChainError();
+
   const wallet = getSealWallet();
   try {
     const sim = await sealPublicClient.simulateContract({
@@ -78,10 +97,13 @@ export async function sealAction(
       args: [nullifierHash, contentHash32, appId],
     });
     const txHash = await wallet.writeContract(sim.request);
-    await sealPublicClient.waitForTransactionReceipt({ hash: txHash });
-    const sealRef = attestDedupeKey(nullifierHash, contentHash32, appId);
-    return { sealRef, txHash, explorer: `${SEAL_EXPLORER}/tx/${txHash}` };
+    const receipt = await sealPublicClient.waitForTransactionReceipt({ hash: txHash });
+    // A reverted receipt here means it was sealed in the tiny window between the read and the write
+    // (a race) — still a duplicate.
+    if (receipt.status === "reverted") throw new AlreadySealedOnChainError();
+    return { sealRef: dedupeKey, txHash, explorer: `${SEAL_EXPLORER}/tx/${txHash}` };
   } catch (err) {
+    if (err instanceof AlreadySealedOnChainError) throw err;
     let reverted: string | undefined;
     if (err instanceof Error) {
       // @ts-expect-error viem error walk
@@ -93,7 +115,12 @@ export async function sealAction(
         return false;
       });
     }
-    if (reverted === "AlreadySealed") throw new AlreadySealedOnChainError();
+    // Match the decoded error name, or fall back to the raw selector for the undecodable
+    // write-revert path — either way a duplicate is a duplicate.
+    const raw = err instanceof Error ? err.message : String(err);
+    if (reverted === "AlreadySealed" || raw.includes(ALREADY_SEALED_SELECTOR)) {
+      throw new AlreadySealedOnChainError();
+    }
     throw err;
   }
 }
