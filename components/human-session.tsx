@@ -9,20 +9,29 @@ import Link from "next/link";
  * one app and then opening the other shows the SAME human already recognized — no re-verify. That
  * shared session IS the demo-sized "Sign in with HumanProof".
  */
-export type HumanSession = { loading: boolean; verified: boolean };
+export type HumanSession = { loading: boolean; verified: boolean; name: string | null };
 
 export function useHumanSession(): HumanSession {
-  const [state, setState] = useState<HumanSession>({ loading: true, verified: false });
+  const [state, setState] = useState<HumanSession>({
+    loading: true,
+    verified: false,
+    name: null,
+  });
 
   useEffect(() => {
     let live = true;
     fetch("/api/session", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        if (live) setState({ loading: false, verified: Boolean(d?.verified) });
+        if (live)
+          setState({
+            loading: false,
+            verified: Boolean(d?.verified),
+            name: typeof d?.name === "string" ? d.name : null,
+          });
       })
       .catch(() => {
-        if (live) setState({ loading: false, verified: false });
+        if (live) setState({ loading: false, verified: false, name: null });
       });
     return () => {
       live = false;
@@ -38,7 +47,7 @@ export function useHumanSession(): HumanSession {
  * again — that's the point to call out on camera. When they aren't, it links back to `/` to verify.
  */
 export function HumanSessionBanner({ appLabel }: { appLabel: string }) {
-  const { loading, verified } = useHumanSession();
+  const { loading, verified, name } = useHumanSession();
 
   if (loading) {
     return (
@@ -53,8 +62,11 @@ export function HumanSessionBanner({ appLabel }: { appLabel: string }) {
       <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
         <span aria-hidden>✓</span>
         <span>
-          <span className="font-medium">Signed in with HumanProof.</span> You&apos;re a verified
-          human — {appLabel} recognized you without asking you to verify again.
+          <span className="font-medium">
+            Signed in with HumanProof{name ? ` as ${name}` : ""}.
+          </span>{" "}
+          You&apos;re a verified human — {appLabel} recognized you without asking you to verify
+          again.
         </span>
       </div>
     );

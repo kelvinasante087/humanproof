@@ -29,6 +29,12 @@ const recordCredentialRef = makeFunctionReference<
   { recorded: boolean }
 >("credentials:record");
 
+const getCredentialByNullifierRef = makeFunctionReference<
+  "query",
+  { nullifierHash: string },
+  { name: string } | null
+>("credentials:getByNullifier");
+
 const reserveSealRef = makeFunctionReference<
   "mutation",
   { dedupeKey: string; nullifierHash: string; appId: string; contentHash: string },
@@ -127,4 +133,10 @@ export async function releaseSeal(id: string): Promise<void> {
 /** Public read for the verify page: a sealed action's safe fields by its reference, or null. */
 export async function getSealByRef(sealRef: string): Promise<PublicSeal | null> {
   return await client().query(getSealByRefRef, { sealRef });
+}
+
+/** The ENS name this human claimed, by their salted nullifier hash — or null. Best-effort display. */
+export async function getCredentialName(nullifierHash: string): Promise<string | null> {
+  const row = await client().query(getCredentialByNullifierRef, { nullifierHash });
+  return row?.name ?? null;
 }

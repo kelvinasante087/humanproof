@@ -66,7 +66,7 @@ export default function ReviewsPage() {
 }
 
 function ItemCard({ id, name, blurb }: { id: string; name: string; blurb: string }) {
-  const { verified } = useHumanSession();
+  const { verified, name: humanName } = useHumanSession();
   const seeds = SEED_REVIEWS[id] ?? [];
   const [posted, setPosted] = useState<PostedReview[]>([]);
 
@@ -92,6 +92,7 @@ function ItemCard({ id, name, blurb }: { id: string; name: string; blurb: string
         <ReviewForm
           itemId={id}
           verified={verified}
+          authorName={humanName}
           onPosted={(r) => setPosted((prev) => [...prev, r])}
         />
       </CardContent>
@@ -115,10 +116,12 @@ function ReviewRow({ review, sealId }: { review: SeedReview; sealId?: string }) 
 function ReviewForm({
   itemId,
   verified,
+  authorName,
   onPosted,
 }: {
   itemId: string;
   verified: boolean;
+  authorName: string | null;
   onPosted: (r: PostedReview) => void;
 }) {
   const [stars, setStars] = useState(5);
@@ -140,7 +143,12 @@ function ReviewForm({
       });
       const data = await res.json();
       if (res.ok) {
-        onPosted({ author: "you — verified human", stars, body, sealId: data.sealId });
+        onPosted({
+          author: authorName ?? "you — verified human",
+          stars,
+          body,
+          sealId: data.sealId,
+        });
         setBody("");
         setStars(5);
         return;

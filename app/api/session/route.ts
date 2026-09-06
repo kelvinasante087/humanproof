@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
 import { readSession } from "@/lib/session";
+import { saltedNullifierHash } from "@/lib/ens/registrar";
+import { dbConfigured, getCredentialName } from "@/lib/db";
 
 /**
  * GET /api/session — the reuse signal behind "Sign in with HumanProof".
@@ -20,5 +22,17 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const jar = await cookies();
   const session = readSession(jar.get(WORLD_SESSION_COOKIE)?.value);
-  return NextResponse.json({ verified: Boolean(session) });
+  if (!session) return NextResponse.json({ verified: false });
+
+  // If the credential store is live, name the human by their claimed ENS name (best-effort — a
+  // lookup failure or an unprovisioned store just omits the name; the raw nullifier never leaves).
+  let name: string | null = null;
+  if (dbConfigured()) {
+    try {
+      name = await getCredentialName(saltedNullifierHash(session.nullifier).toString());
+    } catch {
+      name = null;
+    }
+  }
+  return NextResponse.json({ verified: true, name });
 }
