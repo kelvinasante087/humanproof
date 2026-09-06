@@ -168,3 +168,41 @@ approach with its trade-off before building. Sequenced last so the seal-independ
 3. After acting in one app, the other shows "Signed in with HumanProof ✓" without re-verifying.
 4. The verify page shows the plain-English claim + a working on-chain tx link, read from the seal.
 5. `next build` green; Vercel site public.
+
+---
+
+## As built (2026-09-06)
+
+All six pieces shipped and building green; every seal-dependent surface degrades cleanly, so the
+site stays public before the prerequisites are on.
+
+- **Shared-session recognition.** `GET /api/session` returns `{ verified, name }` from the signed
+  World cookie — a boolean plus the claimed ENS name (best-effort, only once Convex is live), never
+  the nullifier. `useHumanSession()` + `HumanSessionBanner` render "Signed in with HumanProof as
+  <name>" on both demo apps — the visible reuse moment.
+- **Reviews (`/reviews`).** Three items (Aurora primary), seed reviews labelled sample data, a live
+  post that calls `/attest` (appId `reviews`) and shows a "Verified human" badge linking to the
+  verify page. 401 / 409 / 503 states handled.
+- **Verify page (`/verify/[id]`).** Server component reads the seal via `seals.getByRef` (new
+  `by_sealRef` index), states the plain-English claim, and links the Base Sepolia tx as the receipt.
+- **For Developers (`/developers`).** The single `/attest` request, the response, the privacy line.
+- **Airdrop (`/airdrop`).** PROOF is a thin ERC-20 (`contracts/ProofToken.sol`, compiles clean,
+  1670 bytes) with an open `claim()`; the one-human-one-claim gate is `/attest`'s nullifier dedupe.
+  The claim is the user's own Privy embedded wallet sending `claim()` on Base Sepolia via
+  `useSendTransaction({ sponsor: true })` (verified against the installed Privy 3.40 types), with a
+  treasury gas top-up fallback (`/api/airdrop/fund`) if sponsorship isn't covering the testnet.
+  Balance is read live; a second claim / a fresh wallet is refused. Privy now defaults to Base
+  Sepolia. Design choice recorded: user-signed + sponsored is the truest "Privy financial flow";
+  the token is intentionally thin (scope discipline) with issuer-gated mint noted as the production
+  hardening, disclosed in the contract.
+
+**To finish end-to-end (founder, one-time):**
+1. Fund the deploy wallet `0x2cAC…dA75` on Base Sepolia (faucet) — this one top-up unblocks BOTH
+   the attest contract and the PROOF token.
+2. `node --env-file=.env.local scripts/seal/01-deploy-attestations.mjs` (seal) and
+   `node --env-file=.env.local scripts/airdrop/01-deploy-proof.mjs` (PROOF token).
+3. `npx convex dev` (interactive login) → set `NEXT_PUBLIC_CONVEX_URL` locally + `CONVEX_DEPLOY_KEY`
+   on Vercel; redeploy so the deployed contract addresses + Convex URL ship.
+4. In the Privy dashboard, enable gas sponsorship for Base Sepolia (optional — the top-up fallback
+   covers it otherwise).
+5. Record the ugly backup demo video once the above is live.
