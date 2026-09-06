@@ -1,6 +1,6 @@
 {
   "chain": "base-sepolia",
   "chainId": 84532,
-  "attestations": "",
-  "worker": ""
+  "attestations": "0xc4C4Be84f403bA4a15e0161Ff97Ebfff1bEBb71e",
+  "worker": "0x2cAC8fD39381E5209D0F57330B8b9fdd9FbaDA75"
 }
