@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { usePrivy } from "@privy-io/react-auth";
+import { useState, useEffect, useRef } from "react";
+import { usePrivy, useCreateWallet } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,9 +36,31 @@ export function Home() {
 /** Uses Privy hooks — only mounted when the provider is present. */
 function AuthPanel() {
   const { ready, authenticated, user, logout } = usePrivy();
+  const { createWallet } = useCreateWallet();
   // Verify is per-session and ephemeral; the card owns the order so the passkey
   // step only unlocks once the human check has passed this session.
   const [verified, setVerified] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  // Attempt embedded-wallet creation at most once per mount, so a persistent
+  // failure surfaces an error instead of looping.
+  const attemptedWallet = useRef(false);
+
+  const walletAddress = user?.wallet?.address;
+
+  // Headless email login (loginWithCode) does NOT trigger Privy's createOnLogin —
+  // that only fires for the Privy modal. So once authenticated with no embedded
+  // wallet yet, create it explicitly; the identity/name/airdrop steps need this address.
+  useEffect(() => {
+    if (!ready || !authenticated || walletAddress || attemptedWallet.current) return;
+    attemptedWallet.current = true;
+    createWallet().catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      // "already has a wallet" is benign — the address will surface on the next render.
+      if (!/already (has|exists)/i.test(msg)) {
+        setWalletError("Couldn't create your wallet. Refresh to retry.");
+      }
+    });
+  }, [ready, authenticated, walletAddress, createWallet]);
 
   if (!ready) {
     return <p className="text-muted-foreground text-sm">Loading…</p>;
@@ -47,8 +69,6 @@ function AuthPanel() {
   if (!authenticated) {
     return <LoginCard />;
   }
-
-  const walletAddress = user?.wallet?.address;
   const email =
     typeof user?.email?.address === "string" ? user.email.address : undefined;
   const hasPasskey =
@@ -74,7 +94,13 @@ function AuthPanel() {
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Wallet</span>
             <span className="font-mono text-xs break-all">
-              {walletAddress ?? "creating…"}
+              {walletAddress ? (
+                walletAddress
+              ) : walletError ? (
+                <span className="text-destructive font-sans">{walletError}</span>
+              ) : (
+                "creating…"
+              )}
             </span>
           </div>
         </div>
