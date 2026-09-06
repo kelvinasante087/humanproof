@@ -1,7 +1,7 @@
 "use client";
 
 import { PrivyProvider } from "@privy-io/react-auth";
-import { base } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 
 /**
  * Privy wraps the whole app: email login + an embedded wallet created
@@ -28,8 +28,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
           ethereum: { createOnLogin: "users-without-wallets" },
           showWalletUIs: false,
         },
-        defaultChain: base,
-        supportedChains: [base],
+        // Base Sepolia is where the seal and the PROOF airdrop live, so the embedded wallet
+        // defaults there and the demo payout shows a real testnet balance change. Base (mainnet)
+        // stays supported as the identity-anchor chain.
+        defaultChain: baseSepolia,
+        supportedChains: [baseSepolia, base],
         appearance: {
           theme: "light",
           accentColor: "#4f46e5",
