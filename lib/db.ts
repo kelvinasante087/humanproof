@@ -87,6 +87,12 @@ const finalizeSealRef = makeFunctionReference<
 
 const releaseSealRef = makeFunctionReference<"mutation", { id: string }, null>("seals:release");
 
+const recordGasFundingRef = makeFunctionReference<
+  "mutation",
+  { nullifierHash: string; address: string },
+  { allowed: boolean }
+>("airdrop:recordGasFunding");
+
 /** Safe, public-facing fields of a sealed action (never the nullifier). */
 export type PublicSeal = {
   appId: string;
@@ -125,6 +131,17 @@ export class AlreadySealedError extends Error {
   }
 }
 
+/** The airdrop gas faucet declined to fund this request (treasury guard). Carries the reason. */
+export type GasFundingBlockReason = "wallet_mismatch" | "funding_limit" | "treasury_cap";
+export class GasFundingBlockedError extends Error {
+  reason: GasFundingBlockReason;
+  constructor(reason: GasFundingBlockReason) {
+    super("GAS_FUNDING_BLOCKED");
+    this.reason = reason;
+    this.name = "GasFundingBlockedError";
+  }
+}
+
 /** Pull the structured error code out of a thrown Convex error, however it surfaced. */
 function convexCode(err: unknown): string | undefined {
   if (err instanceof ConvexError) {
@@ -132,7 +149,7 @@ function convexCode(err: unknown): string | undefined {
     if (data?.code) return data.code;
   }
   if (err instanceof Error) {
-    const m = err.message.match(/ALREADY_(?:RECORDED|SEALED)/);
+    const m = err.message.match(/ALREADY_(?:RECORDED|SEALED)|WALLET_MISMATCH|FUNDING_LIMIT|TREASURY_CAP/);
     if (m) return m[0];
   }
   return undefined;
@@ -178,6 +195,29 @@ export async function releaseSeal(id: string): Promise<void> {
     await client().mutation(releaseSealRef, { id });
   } catch {
     // best-effort rollback; a stale reservation only blocks a re-attempt of the same action
+  }
+}
+
+/**
+ * Treasury guard for the airdrop gas faucet: atomically record that this human is being funded, or
+ * throw. Resolves on success; throws GasFundingBlockedError when the guard declines (a different
+ * wallet, too many retries, or the daily treasury cap). Any other throw (e.g. the function isn't
+ * deployed yet) propagates so the caller can fail closed rather than open the faucet.
+ */
+export async function recordGasFunding(nullifierHash: string, address: string): Promise<void> {
+  try {
+    await client().mutation(recordGasFundingRef, { nullifierHash, address });
+  } catch (err) {
+    switch (convexCode(err)) {
+      case "WALLET_MISMATCH":
+        throw new GasFundingBlockedError("wallet_mismatch");
+      case "FUNDING_LIMIT":
+        throw new GasFundingBlockedError("funding_limit");
+      case "TREASURY_CAP":
+        throw new GasFundingBlockedError("treasury_cap");
+      default:
+        throw err;
+    }
   }
 }
 

@@ -41,4 +41,20 @@ export default defineSchema({
     .index("by_dedupe", ["dedupeKey"])
     .index("by_nullifier", ["nullifierHash"])
     .index("by_sealRef", ["sealRef"]), // public verify page looks a seal up by its reference
+
+  // One row per human who has received a gas top-up from the airdrop faucet. This is the treasury
+  // guard: a verified human may fund exactly ONE wallet (a few idempotent retries of that same
+  // wallet), so a single session can't spray gas to an endless stream of fresh addresses. `day` is a
+  // UTC day bucket used to enforce a daily treasury cap (circuit breaker). Keyed on the salted
+  // nullifier — the same anonymous fingerprint as `seals`, never the raw value.
+  gasFundings: defineTable({
+    nullifierHash: v.string(), // salt(nullifier), decimal string
+    address: v.string(), // the one wallet this human is allowed to top up (lowercased)
+    count: v.number(), // number of top-ups sent to that wallet
+    day: v.number(), // floor(createdAt / 86_400_000), UTC day bucket
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_nullifier", ["nullifierHash"])
+    .index("by_day", ["day"]),
 });
