@@ -27,17 +27,23 @@ export async function GET() {
   // If the credential store is live, name the human by their claimed ENS name (best-effort — a
   // lookup failure or an unprovisioned store just omits the name; the raw nullifier never leaves).
   let name: string | null = null;
+  // Has this human finished their credential? true/false once the store answered; null when we
+  // couldn't ask (store unconfigured or erroring) so the UI can fail OPEN rather than lock a real
+  // human out of their own account over a transient backend blip.
+  let credentialed: boolean | null = null;
   if (dbConfigured()) {
     try {
       // Onboarding sessions carry the raw nullifier (hash it); passkey re-login sessions already
       // carry the salted hash. The name lookup is keyed on that hash in both cases.
       const nullifierHash = session.nullifierHash ?? saltedNullifierHash(session.nullifier!).toString();
       name = await getCredentialName(nullifierHash);
+      credentialed = name !== null;
     } catch {
       name = null;
+      credentialed = null;
     }
   }
-  return NextResponse.json({ verified: true, name });
+  return NextResponse.json({ verified: true, name, credentialed });
 }
 
 /** Clear the reusable HumanProof browser session when the account signs out. */

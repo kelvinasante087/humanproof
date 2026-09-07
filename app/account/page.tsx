@@ -19,7 +19,7 @@ import { AccountGuard } from "@/components/account-page-shell";
  */
 export default function AccountPage() {
   const { user } = usePrivy();
-  const { verified, name } = useHumanSession();
+  const { verified, name, refresh } = useHumanSession();
   const [proofBalance, setProofBalance] = useState<string>("0");
   const [ethBalance, setEthBalance] = useState<string>("0.0000");
   const [cardColorway] = useState<CredentialColorway>(() => {
@@ -29,6 +29,13 @@ export default function AccountPage() {
   });
 
   const wallet = user?.wallet?.address;
+
+  // The shared session is fetched once when the app first loads. Landing here straight after
+  // onboarding (a client-side navigation) would otherwise render the stale pre-signup state — no
+  // name, not verified — until a manual reload. Re-ask on entry so the card tells the truth.
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   useEffect(() => {
     if (wallet) {

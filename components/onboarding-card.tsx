@@ -13,6 +13,7 @@ import {
 } from "@worldcoin/idkit";
 import { WORLD_APP_ID, WORLD_ACTION, WORLD_ENV } from "@/lib/world";
 import { MobileWorldSimulatorLink } from "@/components/mobile-world-simulator-link";
+import { useHumanSession } from "@/components/human-session";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
@@ -59,6 +60,11 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
   const { linkWithPasskey, state: passkeyState } = useLinkWithPasskey();
   const { createWallet } = useCreateWallet();
   const router = useRouter();
+  // The app-wide session is fetched once at page load. Onboarding changes it (World verify issues
+  // the verified cookie; the claim records the name), so we refresh it at each of those moments —
+  // otherwise the dashboard we navigate to still shows the pre-signup state (no name, not verified)
+  // until a manual page reload.
+  const { refresh: refreshHumanSession } = useHumanSession();
 
   // Leave onboarding for the signed-in home (account details live there, not in this modal).
   function goToDashboard() {
@@ -196,6 +202,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
     setWorldVerified(true);
     setWorldWidgetOpen(false);
     setWorldStatus("idle");
+    void refreshHumanSession();
     toast.success("Zero-knowledge human proof verified!");
   }
 
@@ -244,6 +251,8 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
         return;
       }
       setClaimedEns(data.name || `${ensLabel.trim()}.humanproof.eth`);
+      // Credential complete — re-ask the server so the dashboard shows this name immediately.
+      await refreshHumanSession();
     } catch {
       const msg = "Network error while claiming your ENS handle.";
       setEnsError(msg);

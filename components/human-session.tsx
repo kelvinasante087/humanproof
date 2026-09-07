@@ -17,17 +17,33 @@ export type HumanSession = {
   loading: boolean;
   verified: boolean;
   name: string | null;
-  /** Re-fetch `/api/session` — call after a passkey sign-in re-issues the verified cookie. */
+  /**
+   * Has this human finished their credential (claimed their name)? `null` means "couldn't tell"
+   * (store unavailable) — callers must fail OPEN on null and never gate someone out on it.
+   */
+  credentialed: boolean | null;
+  /**
+   * Re-fetch `/api/session`. Call after anything that changes the verified session — a passkey
+   * sign-in, or finishing onboarding — so every surface updates without a page reload.
+   */
   refresh: () => Promise<void>;
+};
+
+type SessionState = {
+  loading: boolean;
+  verified: boolean;
+  name: string | null;
+  credentialed: boolean | null;
 };
 
 const HumanSessionContext = createContext<HumanSession | null>(null);
 
 export function HumanSessionProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ loading: boolean; verified: boolean; name: string | null }>({
+  const [state, setState] = useState<SessionState>({
     loading: true,
     verified: false,
     name: null,
+    credentialed: null,
   });
 
   const refresh = useCallback(async () => {
@@ -38,9 +54,10 @@ export function HumanSessionProvider({ children }: { children: React.ReactNode }
         loading: false,
         verified: Boolean(d?.verified),
         name: typeof d?.name === "string" ? d.name : null,
+        credentialed: typeof d?.credentialed === "boolean" ? d.credentialed : null,
       });
     } catch {
-      setState({ loading: false, verified: false, name: null });
+      setState({ loading: false, verified: false, name: null, credentialed: null });
     }
   }, []);
 
@@ -62,7 +79,13 @@ export function useHumanSession(): HumanSession {
   const ctx = useContext(HumanSessionContext);
   if (!ctx) {
     // Defensive: outside the provider, behave as an unknown/unverified session rather than crash.
-    return { loading: false, verified: false, name: null, refresh: async () => {} };
+    return {
+      loading: false,
+      verified: false,
+      name: null,
+      credentialed: null,
+      refresh: async () => {},
+    };
   }
   return ctx;
 }

@@ -25,7 +25,7 @@ import {
 export function AccountSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = usePrivy();
+  const { logout } = usePrivy();
   const { name } = useHumanSession();
   const { avatarId } = useAvatar();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -46,8 +46,9 @@ export function AccountSidebar() {
     };
   }, [mobileOpen]);
 
-  const email = typeof user?.email?.address === "string" ? user.email.address : undefined;
-  const displayName = name || email?.split("@")[0] || "Verified Human";
+  // Your identity here is your claimed HumanProof handle — never your email. Falling back to the
+  // email's local part leaked a private sign-in detail into the UI as if it were your name.
+  const displayName = name || "Verified Human";
 
   const credentialItems = [
     {
