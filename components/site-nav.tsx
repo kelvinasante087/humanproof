@@ -69,7 +69,7 @@ export function SiteNav() {
         {/* Center: Nav Items */}
         <nav className="flex items-center gap-8 text-sm font-semibold tracking-tight">
           <Link
-            href="#how-it-works"
+            href="/how-it-works"
             className="text-white hover:opacity-75 transition-opacity"
           >
             How it works

@@ -55,11 +55,11 @@ export default function Page() {
           {/* Section Header */}
           <div className="flex flex-col items-start text-left max-w-2xl">
             <h2 className="font-heading text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.08] text-white font-normal">
-              Every product you need.<br />
-              Nothing you don&apos;t.
+              One proof.<br />
+              Every app.
             </h2>
-            <p className="mt-5 text-slate-300 text-base sm:text-lg lg:text-xl font-normal leading-relaxed">
-              From your first proof-of-human credential to full sybil-proof dApp integration. Built for individuals, developers, and growing ecosystems.
+            <p className="mt-5 text-white/70 text-base sm:text-lg lg:text-xl font-normal leading-relaxed">
+              From your first proof-of-human credential to full sybil-proof integration. Built for people, developers, and the apps that plug in.
             </p>
           </div>
 
@@ -82,16 +82,16 @@ export default function Page() {
                     </svg>
                   </div>
                   <span className="font-heading text-3xl sm:text-4xl text-white">
-                    Core App
+                    Your credential
                   </span>
                 </div>
 
                 <div className="text-xs sm:text-sm font-medium text-blue-100/90 tracking-wide">
-                  $0 / month · No fees
+                  Free · No identity stored
                 </div>
 
                 <p className="text-base sm:text-lg text-blue-50/90 font-normal leading-relaxed mt-1">
-                  Your everyday account. No minimums, no monthly fees, and a proof-of-human credential that works across 150+ applications with zero markup or identity leakage.
+                  One proof of personhood, reusable across every app that plugs in. No name, no face, nothing stored — and you never verify twice.
                 </p>
               </div>
 
@@ -114,78 +114,75 @@ export default function Page() {
                 onClick={openOnboarding}
                 className="bg-white text-black font-semibold text-sm sm:text-base px-7 py-3 rounded-full hover:bg-slate-100 transition-all duration-200 shadow-md inline-block cursor-pointer"
               >
-                Get Core App
+                Prove you&apos;re human
               </button>
             </div>
           </div>
 
-          {/* Two Side-by-Side Cards Grid */}
+          {/* Two Side-by-Side Cards Grid: the real demo apps riding on the proof layer */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Card 1: Invest / SDK */}
+            {/* Card 1: Reviews demo */}
             <div className="rounded-[2.5rem] bg-[#1a1920] border border-white/10 p-8 sm:p-10 flex flex-col justify-between min-h-[380px] relative overflow-hidden group hover:border-white/20 transition-all duration-300">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/15">
-                    <span className="font-heading text-lg font-bold text-white">I</span>
+                    <span className="font-heading text-lg font-bold text-white">R</span>
                   </div>
                   <span className="font-heading text-2xl sm:text-3xl text-white">
-                    Invest
+                    Reviews
                   </span>
                 </div>
 
-                <div className="text-xs sm:text-sm font-medium text-slate-400">
-                  $0 / month · No fees
+                <div className="text-xs sm:text-sm font-medium text-white/50">
+                  Demo app · Abuse prevention
                 </div>
 
-                <p className="text-sm sm:text-base text-slate-300 leading-relaxed mt-2">
-                  Commission-free investing in stocks, ETFs, and crypto. Start with as little as $1 via fractional shares. Set up recurring buys and let auto-rebalancing do the work.
+                <p className="text-sm sm:text-base text-white/70 leading-relaxed mt-2">
+                  A reviews app where anyone can read, but only a verified human can post. Fake-review
+                  farms can&apos;t get in — the proof gates the Post button, not the page.
                 </p>
               </div>
 
               <div className="mt-8">
-                <button
-                  onClick={openOnboarding}
+                <Link
+                  href="/reviews"
                   className="bg-white text-black font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-slate-200 transition-all duration-200 inline-block shadow-sm cursor-pointer"
                 >
-                  Get Invest
-                </button>
+                  Open the demo
+                </Link>
               </div>
             </div>
 
-            {/* Card 2: Business */}
+            {/* Card 2: PROOF airdrop demo */}
             <div className="rounded-[2.5rem] bg-[#121215] border border-white/10 p-8 sm:p-10 flex flex-col justify-between min-h-[380px] relative overflow-hidden group hover:border-white/20 transition-all duration-300">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center p-2">
-                    <svg
-                      viewBox="0 0 73.44 73.44"
-                      className="w-full h-full text-black fill-current"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path d="M36.72,0C16.44,0,0,16.44,0,36.72s16.44,36.72,36.72,36.72,36.72-16.44,36.72-36.72S57,0,36.72,0ZM31.83,39.27c-.53-.37-1.18-.68-1.97-.84-1.98-.4-4.03.33-5.35,1.89v19.52h-13.11V13.6h13.11v14.96c.91-.23,2.65-.54,4.76-.1.99.21,1.85.53,2.56.89v9.92ZM47.03,59.84h-13.13V13.6h13.13v46.23ZM57.06,48.12c-2.09,0-6.1-.63-7.96-3.14v-6.22c4.37-.03,6.11-1.07,6.11-5.93s-1.74-5.92-6.11-6.02v-13.21h4.26c9.37,0,15.11,5.67,15.11,15.35,0,10.97-3.95,19.17-11.41,19.17Z" />
-                    </svg>
+                  <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center">
+                    <span className="font-heading text-lg font-bold">P</span>
                   </div>
                   <span className="font-heading text-2xl sm:text-3xl text-white">
-                    Business
+                    PROOF airdrop
                   </span>
                 </div>
 
-                <div className="text-xs sm:text-sm font-medium text-slate-400">
-                  $0 / month · No fees
+                <div className="text-xs sm:text-sm font-medium text-white/50">
+                  Demo app · Sybil resistance
                 </div>
 
-                <p className="text-sm sm:text-base text-slate-300 leading-relaxed mt-2">
-                  Business checking built for founders. Issue team expense cards, set per-card limits, run payroll, and connect 2,000+ tools via API — all from one dashboard.
+                <p className="text-sm sm:text-base text-white/70 leading-relaxed mt-2">
+                  A token airdrop where each person can claim exactly once. The block is keyed to the
+                  human, not the wallet, so fresh wallets and bot farms can&apos;t drain it. Runs on a
+                  test network.
                 </p>
               </div>
 
               <div className="mt-8">
-                <button
-                  onClick={openOnboarding}
+                <Link
+                  href="/airdrop"
                   className="bg-[#242329] border border-white/20 text-white font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-white hover:text-black transition-all duration-200 inline-block shadow-sm cursor-pointer"
                 >
-                  Get Business
-                </button>
+                  Open the demo
+                </Link>
               </div>
             </div>
           </div>
@@ -243,11 +240,11 @@ export default function Page() {
 
             <div className="flex flex-col gap-3 relative z-10 max-w-lg">
               <h3 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-white font-normal leading-tight tracking-tight">
-                One account.<br />
-                <span className="italic font-normal">Everything you need.</span>
+                Prove once.<br />
+                <span className="italic font-normal">Trusted everywhere.</span>
               </h3>
               <p className="text-slate-200 text-base sm:text-lg mt-1 font-normal">
-                Open your account in 5 minutes.
+                It takes about a minute. No name, no face, nothing stored.
               </p>
             </div>
 
@@ -256,13 +253,13 @@ export default function Page() {
                 onClick={openOnboarding}
                 className="bg-white text-black font-semibold text-base sm:text-lg px-8 py-4 rounded-full hover:bg-slate-100 transition-all duration-200 shadow-xl cursor-pointer"
               >
-                Open account
+                Prove you&apos;re human
               </button>
               <Link
-                href="#products"
+                href="/how-it-works"
                 className="text-white hover:text-slate-200 underline underline-offset-4 text-sm font-semibold transition-colors"
               >
-                Compare Plans
+                See how it works
               </Link>
             </div>
           </div>
@@ -273,31 +270,28 @@ export default function Page() {
       <footer className="w-full bg-black text-white pt-20 pb-28 px-6 sm:px-10 lg:px-16 border-t border-white/10 relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-20 text-sm">
-            {/* Col 1 */}
+            {/* Col 1: Product */}
             <div className="flex flex-col gap-3">
+              <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">Product</span>
               <Link href="/" className="text-slate-300 hover:text-white transition-colors font-medium">Home</Link>
-              <Link href="#products" className="text-slate-300 hover:text-white transition-colors font-medium">Pricing</Link>
+              <Link href="/how-it-works" className="text-slate-300 hover:text-white transition-colors font-medium">How it works</Link>
+              <Link href="/developers" className="text-slate-300 hover:text-white transition-colors font-medium">For developers</Link>
               <Link href="#about" className="text-slate-300 hover:text-white transition-colors font-medium">About</Link>
-              <Link href="#products" className="text-slate-300 hover:text-white transition-colors font-medium">Business</Link>
-              <Link href="#faq" className="text-slate-300 hover:text-white transition-colors font-medium">FAQ</Link>
             </div>
 
-            {/* Col 2 */}
+            {/* Col 2: Demos */}
             <div className="flex flex-col gap-3">
-              <Link href="/careers" className="text-slate-300 hover:text-white transition-colors font-medium">Careers</Link>
-              <Link href="/press" className="text-slate-300 hover:text-white transition-colors font-medium">Press</Link>
-              <Link href="/media" className="text-slate-300 hover:text-white transition-colors font-medium">Media Kit</Link>
-              <Link href="/privacy" className="text-slate-300 hover:text-white transition-colors font-medium">Privacy Policy</Link>
-              <Link href="/terms" className="text-slate-300 hover:text-white transition-colors font-medium">Terms & Conditions</Link>
+              <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">Demos</span>
+              <Link href="/reviews" className="text-slate-300 hover:text-white transition-colors font-medium">Reviews</Link>
+              <Link href="/airdrop" className="text-slate-300 hover:text-white transition-colors font-medium">PROOF airdrop</Link>
             </div>
 
-            {/* Col 3 */}
+            {/* Col 3: Legal */}
             <div className="flex flex-col gap-3">
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors font-medium">Instagram</a>
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors font-medium">LinkedIn</a>
-              <a href="https://tiktok.com" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors font-medium">TikTok</a>
-              <a href="https://x.com" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors font-medium">Twitter / X</a>
-              <a href="https://github.com" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors font-medium">GitHub</a>
+              <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">Legal</span>
+              <Link href="/faq" className="text-slate-300 hover:text-white transition-colors font-medium">FAQ</Link>
+              <Link href="/privacy" className="text-slate-300 hover:text-white transition-colors font-medium">Privacy</Link>
+              <Link href="/terms" className="text-slate-300 hover:text-white transition-colors font-medium">Terms</Link>
             </div>
 
             {/* Col 4 (Copyright & Socials) */}
@@ -307,7 +301,7 @@ export default function Page() {
                 <a href="https://x.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                 </a>
-                <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                <a href="https://github.com/kelvinasante087/humanproof" target="_blank" rel="noreferrer" aria-label="HumanProof on GitHub" className="hover:text-white transition-colors">
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                 </a>
               </div>
