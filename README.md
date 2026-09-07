@@ -78,7 +78,7 @@ All application code and smart contracts in this repository were written from sc
 
 ## Design
 
-The brand and every screen were designed from scratch during ETHOnline 2026, from a locked direction — a deep-navy credential card, a teal verification mark, and a single indigo action — and finished in Figma. Design assets live in `/design`.
+The brand and every screen were designed from scratch during ETHOnline 2026, from a locked direction — a deep-navy credential card, a teal verification mark, and a single indigo action — and finished in Figma. Direction and exported assets live in [`design/`](design/).
 
 Figma file: _add link_
 
