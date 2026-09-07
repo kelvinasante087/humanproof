@@ -2,6 +2,7 @@
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import { base, baseSepolia } from "viem/chains";
+import { HumanSessionProvider } from "@/components/human-session";
 
 /**
  * Privy wraps the whole app: email login + an embedded wallet created
@@ -16,7 +17,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
   if (!appId) {
-    return <>{children}</>;
+    // No Privy app yet: still share the HumanProof session state so pages render consistently.
+    return <HumanSessionProvider>{children}</HumanSessionProvider>;
   }
 
   return (
@@ -39,7 +41,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      {/* Shared "Sign in with HumanProof" session state, available to every route under Privy. */}
+      <HumanSessionProvider>{children}</HumanSessionProvider>
     </PrivyProvider>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 
 /**
@@ -8,37 +8,61 @@ import Link from "next/link";
  * verified human this session (see app/api/session/route.ts). Both demo apps use it, so acting in
  * one app and then opening the other shows the SAME human already recognized — no re-verify. That
  * shared session IS the demo-sized "Sign in with HumanProof".
+ *
+ * It lives in a context provider so every surface (the banner, a gated action, a sign-in wall)
+ * shares one session state — and so a passkey sign-in can `refresh()` it and light everything up at
+ * once, without a page reload.
  */
-export type HumanSession = { loading: boolean; verified: boolean; name: string | null };
+export type HumanSession = {
+  loading: boolean;
+  verified: boolean;
+  name: string | null;
+  /** Re-fetch `/api/session` — call after a passkey sign-in re-issues the verified cookie. */
+  refresh: () => Promise<void>;
+};
 
-export function useHumanSession(): HumanSession {
-  const [state, setState] = useState<HumanSession>({
+const HumanSessionContext = createContext<HumanSession | null>(null);
+
+export function HumanSessionProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<{ loading: boolean; verified: boolean; name: string | null }>({
     loading: true,
     verified: false,
     name: null,
   });
 
-  useEffect(() => {
-    let live = true;
-    fetch("/api/session", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => {
-        if (live)
-          setState({
-            loading: false,
-            verified: Boolean(d?.verified),
-            name: typeof d?.name === "string" ? d.name : null,
-          });
-      })
-      .catch(() => {
-        if (live) setState({ loading: false, verified: false, name: null });
+  const refresh = useCallback(async () => {
+    try {
+      const r = await fetch("/api/session", { cache: "no-store" });
+      const d = await r.json();
+      setState({
+        loading: false,
+        verified: Boolean(d?.verified),
+        name: typeof d?.name === "string" ? d.name : null,
       });
-    return () => {
-      live = false;
-    };
+    } catch {
+      setState({ loading: false, verified: false, name: null });
+    }
   }, []);
 
-  return state;
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return (
+    <HumanSessionContext.Provider value={{ ...state, refresh }}>
+      {children}
+    </HumanSessionContext.Provider>
+  );
+}
+
+/** Read the shared HumanProof session. Must be used under <HumanSessionProvider> (app-wide). */
+export function useHumanSession(): HumanSession {
+  const ctx = useContext(HumanSessionContext);
+  if (!ctx) {
+    // Defensive: outside the provider, behave as an unknown/unverified session rather than crash.
+    return { loading: false, verified: false, name: null, refresh: async () => {} };
+  }
+  return ctx;
 }
 
 /**
