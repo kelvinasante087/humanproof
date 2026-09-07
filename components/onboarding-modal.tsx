@@ -49,16 +49,21 @@ export function OnboardingModalProvider({ children }: { children: React.ReactNod
 
       {/* Modal Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md transition-all duration-300 animate-in fade-in">
+        <div className="fixed inset-0 z-[999] flex items-stretch justify-center bg-black/80 p-0 backdrop-blur-md transition-all duration-300 animate-in fade-in sm:items-center sm:p-6">
           {/* Backdrop Click Area */}
           <div className="absolute inset-0" onClick={closeOnboarding} />
 
           {/* Modal Container */}
-          <div className="relative z-10 w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-[2rem] shadow-2xl transition-all transform scale-100 animate-in zoom-in-95 duration-200">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Create your HumanProof credential"
+            className="relative z-10 h-[100dvh] w-full max-w-4xl overflow-y-auto overscroll-contain bg-[#0c0c0e] shadow-2xl transition-all transform scale-100 animate-in zoom-in-95 duration-200 sm:h-auto sm:max-h-[92dvh] sm:rounded-[2rem]"
+          >
             {/* Close Button */}
             <button
               onClick={closeOnboarding}
-              className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors border border-white/15 backdrop-blur-md cursor-pointer"
+              className="fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-30 flex h-11 w-11 items-center justify-center border border-white/25 bg-black text-white transition-colors hover:bg-white/10 cursor-pointer sm:absolute sm:right-4 sm:top-4 sm:h-9 sm:w-9 sm:rounded-full sm:bg-white/10"
               aria-label="Close modal"
             >
               <X className="w-4 h-4" />

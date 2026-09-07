@@ -9,11 +9,11 @@ export default function Page() {
   return (
     <div className="w-full bg-black text-white selection:bg-white selection:text-black">
       {/* 1. Hero Section */}
-      <section className="min-h-[calc(100vh-73px)] w-full bg-black text-white relative overflow-hidden flex items-center py-16 px-6 sm:px-10 lg:px-16">
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+      <section className="relative flex min-h-[calc(100svh-65px)] w-full items-center overflow-hidden bg-black px-5 py-12 text-white sm:min-h-[calc(100vh-73px)] sm:px-10 sm:py-16 lg:px-16">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-8 lg:grid-cols-12">
           {/* Left Column: Headline, Subhead & CTAs */}
           <div className="lg:col-span-7 flex flex-col items-start text-left">
-            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.1] text-white font-normal">
+            <h1 className="font-heading text-[2.65rem] sm:text-5xl lg:text-6xl tracking-tight leading-[1.04] sm:leading-[1.1] text-white font-normal">
               Prove you&apos;re human.<br />
               Once.<br />
               Trusted <span className="italic font-normal text-white">everywhere.</span>
@@ -25,17 +25,17 @@ export default function Page() {
               and humans never verify twice.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-6">
+            <div className="mt-8 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
               <button
                 onClick={openOnboarding}
-                className="bg-white text-black font-semibold text-sm sm:text-base px-7 py-3.5 rounded-full hover:bg-slate-200 transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 group cursor-pointer"
+                className="group flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-black shadow-md transition-all duration-200 hover:bg-slate-200 hover:shadow-lg sm:text-base"
               >
                 <span>Prove you&apos;re human</span>
               </button>
 
               <Link
                 href="#products"
-                className="text-white hover:opacity-80 font-medium text-sm sm:text-base px-3 py-3 transition-opacity flex items-center gap-1.5 group"
+                className="group flex min-h-11 items-center justify-center gap-1.5 px-3 py-3 text-sm font-medium text-white transition-opacity hover:opacity-80 sm:text-base"
               >
                 <span>See how it works</span>
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -44,14 +44,14 @@ export default function Page() {
           </div>
 
           {/* Right Column */}
-          <div className="lg:col-span-5 flex justify-center items-center relative min-h-[350px]">
+          <div className="relative hidden min-h-[350px] items-center justify-center lg:col-span-5 lg:flex">
           </div>
         </div>
       </section>
 
       {/* 2. Products Section */}
-      <section id="products" className="w-full bg-black text-white py-20 px-6 sm:px-10 lg:px-16 border-t border-white/10">
-        <div className="max-w-7xl mx-auto flex flex-col gap-12">
+      <section id="products" className="w-full border-t border-white/10 bg-black px-5 py-14 text-white sm:px-10 sm:py-20 lg:px-16">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 sm:gap-12">
           {/* Section Header */}
           <div className="flex flex-col items-start text-left max-w-2xl">
             <h2 className="font-heading text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.08] text-white font-normal">
@@ -64,7 +64,7 @@ export default function Page() {
           </div>
 
           {/* Main Full-Width Blue Feature Card (Core App) */}
-          <div className="w-full rounded-[2.5rem] bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-8 sm:p-12 text-white relative overflow-hidden flex flex-col justify-between min-h-[420px] sm:min-h-[460px] shadow-2xl border border-white/20 group">
+          <div className="group relative flex w-full flex-col justify-between overflow-hidden rounded-[1.5rem] border border-white/20 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-6 text-white shadow-2xl sm:min-h-[460px] sm:rounded-[2.5rem] sm:p-12">
             {/* Background Light Glow Accent */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 blur-[100px] rounded-full pointer-events-none" />
 
@@ -96,8 +96,8 @@ export default function Page() {
               </div>
 
               {/* Right Mockup Representation */}
-              <div className="w-full lg:w-1/2 flex justify-center lg:justify-end items-center relative min-h-[220px]">
-                <div className="w-64 sm:w-72 h-44 sm:h-48 rounded-2xl bg-black/40 border border-white/20 backdrop-blur-xl p-4 flex flex-col justify-between shadow-2xl transform rotate-3 group-hover:rotate-0 transition-transform duration-500">
+              <div className="relative flex min-h-[190px] w-full items-center justify-center lg:min-h-[220px] lg:w-1/2 lg:justify-end">
+                <div className="flex h-44 w-full max-w-72 rotate-2 flex-col justify-between rounded-2xl border border-white/20 bg-black/40 p-4 shadow-2xl backdrop-blur-xl transition-transform duration-500 group-hover:rotate-0 sm:h-48 sm:w-72">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-semibold tracking-wider text-slate-300">HUMANPROOF VERIFIED</span>
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -122,7 +122,7 @@ export default function Page() {
           {/* Two Side-by-Side Cards Grid: the real demo apps riding on the proof layer */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Card 1: Reviews demo */}
-            <div className="rounded-[2.5rem] bg-[#1a1920] border border-white/10 p-8 sm:p-10 flex flex-col justify-between min-h-[380px] relative overflow-hidden group hover:border-white/20 transition-all duration-300">
+            <div className="group relative flex min-h-[310px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#1a1920] p-6 transition-all duration-300 hover:border-white/20 sm:min-h-[380px] sm:rounded-[2.5rem] sm:p-10">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/15">
@@ -154,7 +154,7 @@ export default function Page() {
             </div>
 
             {/* Card 2: PROOF airdrop demo */}
-            <div className="rounded-[2.5rem] bg-[#121215] border border-white/10 p-8 sm:p-10 flex flex-col justify-between min-h-[380px] relative overflow-hidden group hover:border-white/20 transition-all duration-300">
+            <div className="group relative flex min-h-[310px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#121215] p-6 transition-all duration-300 hover:border-white/20 sm:min-h-[380px] sm:rounded-[2.5rem] sm:p-10">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center">
@@ -190,11 +190,11 @@ export default function Page() {
       </section>
 
       {/* 3. About Section */}
-      <section id="about" className="w-full bg-black text-white py-24 px-6 sm:px-10 lg:px-16 border-t border-white/10">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+      <section id="about" className="w-full border-t border-white/10 bg-black px-5 py-14 text-white sm:px-10 sm:py-24 lg:px-16">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-8 sm:gap-12 lg:grid-cols-12">
           {/* Left Column Title */}
           <div className="lg:col-span-4">
-            <h2 className="font-heading text-5xl sm:text-6xl text-white font-normal tracking-tight">
+            <h2 className="font-heading text-4xl font-normal tracking-tight text-white sm:text-6xl">
               About
             </h2>
           </div>
@@ -202,7 +202,7 @@ export default function Page() {
           {/* Right Column Content */}
           <div className="lg:col-span-8 flex flex-col gap-8">
             {/* Visual Image Banner */}
-            <div className="w-full h-72 sm:h-96 rounded-3xl bg-gradient-to-br from-slate-800 via-slate-900 to-black border border-white/10 overflow-hidden relative shadow-2xl flex items-center justify-center p-6 group">
+            <div className="group relative flex h-56 w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800 via-slate-900 to-black p-6 shadow-2xl sm:h-96 sm:rounded-3xl">
               <div className="absolute inset-0 bg-grid-pattern opacity-30" />
               <div className="flex flex-col items-center gap-3 relative z-10 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
@@ -232,9 +232,9 @@ export default function Page() {
       </section>
 
       {/* 4. Full-Width CTA Banner */}
-      <section className="w-full bg-black text-white py-16 px-6 sm:px-10 lg:px-16 border-t border-white/10">
+      <section className="w-full border-t border-white/10 bg-black px-5 py-12 text-white sm:px-10 sm:py-16 lg:px-16">
         <div className="max-w-7xl mx-auto">
-          <div className="w-full rounded-[2.5rem] bg-gradient-to-r from-[#0a2347] via-[#08356b] to-[#0a2347] p-10 sm:p-16 text-white relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border border-white/15 shadow-2xl">
+          <div className="relative flex w-full flex-col items-start justify-between gap-8 overflow-hidden rounded-[1.5rem] border border-white/15 bg-gradient-to-r from-[#0a2347] via-[#08356b] to-[#0a2347] p-6 text-white shadow-2xl sm:rounded-[2.5rem] sm:p-16 md:flex-row md:items-center">
             {/* Background Glow */}
             <div className="absolute top-1/2 -left-20 -translate-y-1/2 w-96 h-96 bg-blue-400/20 blur-[100px] rounded-full pointer-events-none" />
 
@@ -248,10 +248,10 @@ export default function Page() {
               </p>
             </div>
 
-            <div className="flex flex-col items-start sm:items-center gap-5 relative z-10">
+            <div className="relative z-10 flex w-full flex-col items-stretch gap-4 sm:w-auto sm:items-center sm:gap-5">
               <button
                 onClick={openOnboarding}
-                className="bg-white text-black font-semibold text-base sm:text-lg px-8 py-4 rounded-full hover:bg-slate-100 transition-all duration-200 shadow-xl cursor-pointer"
+                className="min-h-12 rounded-full bg-white px-8 py-4 text-base font-semibold text-black shadow-xl transition-all duration-200 hover:bg-slate-100 sm:text-lg"
               >
                 Prove you&apos;re human
               </button>
@@ -267,9 +267,9 @@ export default function Page() {
       </section>
 
       {/* 5. Footer */}
-      <footer className="w-full bg-black text-white pt-20 pb-28 px-6 sm:px-10 lg:px-16 border-t border-white/10 relative overflow-hidden">
+      <footer className="relative w-full overflow-hidden border-t border-white/10 bg-black px-5 pb-20 pt-14 text-white sm:px-10 sm:pb-28 sm:pt-20 lg:px-16">
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-20 text-sm">
+          <div className="mb-14 grid grid-cols-2 gap-x-6 gap-y-10 text-sm sm:mb-20 md:grid-cols-4 md:gap-10">
             {/* Col 1: Product */}
             <div className="flex flex-col gap-3">
               <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">Product</span>
@@ -338,7 +338,6 @@ export default function Page() {
     </div>
   );
 }
-
 
 
 

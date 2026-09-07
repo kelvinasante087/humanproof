@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,6 +31,20 @@ export function AccountSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [mobileOpen]);
 
   const email = typeof user?.email?.address === "string" ? user.email.address : undefined;
   const displayName = name || email?.split("@")[0] || "Verified Human";
@@ -76,7 +90,7 @@ export function AccountSidebar() {
     !searchQuery || item.label.toLowerCase().includes(searchQuery.toLowerCase());
 
   const sidebarContent = (
-    <div className="flex flex-col justify-between h-full p-5 text-white bg-black select-none">
+    <div className="flex h-full flex-col justify-between overflow-y-auto overscroll-contain bg-black p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white select-none">
       {/* Top Header & Navigation */}
       <div className="flex flex-col">
         {/* Brand Logo Lockup */}
@@ -267,7 +281,7 @@ export function AccountSidebar() {
   return (
     <>
       {/* Mobile Top Header */}
-      <div className="lg:hidden flex items-center justify-between px-5 py-4 bg-black border-b border-white/10 text-white sticky top-0 z-40">
+      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-black px-5 py-4 text-white lg:hidden">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-black/60 flex items-center justify-center p-1 border border-white/20">
             <svg
@@ -283,8 +297,10 @@ export function AccountSidebar() {
 
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-lg bg-white/5 border border-white/10 text-white cursor-pointer"
-          aria-label="Toggle navigation"
+          className="flex h-10 w-10 items-center justify-center border border-white/20 bg-black text-white cursor-pointer"
+          aria-label={mobileOpen ? "Close account navigation" : "Open account navigation"}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-account-navigation"
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -292,8 +308,8 @@ export function AccountSidebar() {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex">
-          <div className="w-72 bg-black h-full border-r border-white/10 shadow-2xl animate-in slide-in-from-left duration-200">
+        <div id="mobile-account-navigation" className="fixed inset-0 z-50 flex bg-black/80 backdrop-blur-sm lg:hidden">
+          <div className="h-[100dvh] w-[min(18rem,calc(100vw-3rem))] border-r border-white/10 bg-black shadow-2xl animate-in slide-in-from-left duration-200">
             {sidebarContent}
           </div>
           <div className="flex-1" onClick={() => setMobileOpen(false)} />

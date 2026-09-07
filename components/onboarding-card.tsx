@@ -12,6 +12,7 @@ import {
   type IDKitErrorCodes,
 } from "@worldcoin/idkit";
 import { WORLD_APP_ID, WORLD_ACTION, WORLD_ENV } from "@/lib/world";
+import { MobileWorldSimulatorLink } from "@/components/mobile-world-simulator-link";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
@@ -258,9 +259,9 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
     passkeyState.status === "submitting-response";
 
   return (
-    <div className="w-full max-w-4xl mx-auto rounded-[2rem] bg-[#0c0c0e] border border-white/10 shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 min-h-[580px]">
+    <div className="grid min-h-[100dvh] w-full grid-cols-1 overflow-hidden bg-[#0c0c0e] shadow-2xl sm:min-h-0 sm:rounded-[2rem] sm:border sm:border-white/10 md:min-h-[580px] md:max-w-4xl md:grid-cols-2 md:mx-auto">
       {/* Left Column: Artwork & Brand Visual */}
-      <div className="relative p-8 sm:p-10 flex flex-col justify-between overflow-hidden border-b md:border-b-0 md:border-r border-white/10 min-h-[380px] md:min-h-[580px] bg-black">
+      <div className="relative hidden min-h-[580px] flex-col justify-between overflow-hidden border-r border-white/10 bg-black p-10 md:flex">
         {/* Background Artwork with Cross-Fade */}
         {ONBOARDING_IMAGES.map((img, idx) => (
           <div
@@ -321,11 +322,11 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
       </div>
 
       {/* Right Column: Progressive Step Flow */}
-      <div className="p-8 sm:p-10 flex flex-col justify-between bg-[#0c0c0e] text-white">
+      <div className="flex min-h-[100dvh] flex-col justify-between bg-[#0c0c0e] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] text-white sm:min-h-[580px] sm:p-10">
         {/* Top Stepper Bar with Symmetrical Alignment */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-5 mb-8">
+        <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4 sm:mb-8 sm:pb-5">
           {/* Symmetrical Step Indicators */}
-          <div className="flex items-center">
+            <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start">
             {[
               { num: 1, label: "Account" },
               { num: 2, label: "World ID" },
@@ -335,10 +336,10 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
               const isCompleted = currentStep > s.num;
               const isCurrent = currentStep === s.num;
               return (
-                <div key={s.num} className="flex items-center">
+                <div key={s.num} className="flex min-w-0 items-center">
                   {/* Step Circle with Perfect Optical Centering */}
                   <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold select-none shrink-0 transition-all duration-300 ${
+                    className={`flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
                       isCompleted
                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]"
                         : isCurrent
@@ -353,7 +354,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
 
                   {/* Connector Line - Exactly Centered Between Circles */}
                   {idx < 3 && (
-                    <div className="w-6 sm:w-8 h-[2px] mx-2 bg-white/10 rounded-full overflow-hidden shrink-0 self-center">
+                    <div className="mx-1.5 h-px w-4 shrink-0 self-center overflow-hidden bg-white/15 min-[360px]:w-6 sm:mx-2 sm:w-8">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ease-out ${
                           currentStep > s.num ? "w-full bg-emerald-400" : "w-0 bg-transparent"
@@ -381,7 +382,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                 className="flex flex-col text-left"
               >
                 {/* Spaced-Out Header */}
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium tracking-wider uppercase text-slate-400 mb-8">
                     <Mail className="w-3.5 h-3.5 text-slate-300" />
                     <span>Step 1 of 4 · Authentication</span>
@@ -527,11 +528,11 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                 className="flex flex-col text-left"
               >
                 <div className="mb-8">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-medium tracking-wider uppercase text-blue-400 mb-8">
+                  <div className="mb-5 inline-flex items-center gap-2 border-y border-white/20 px-0 py-2 text-[11px] font-medium uppercase tracking-wider text-white sm:mb-8 sm:rounded-full sm:border sm:px-3.5 sm:py-1.5">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Step 2 of 4 · Proof of Human</span>
                   </div>
-                  <h2 className="font-heading text-3xl sm:text-4xl text-white font-normal tracking-tight leading-[1.18] mb-3">
+                  <h2 className="font-heading mb-3 text-[2rem] font-normal leading-[1.08] tracking-tight text-white sm:text-4xl sm:leading-[1.18]">
                     World ID Selfie Check
                   </h2>
                   <p className="text-sm sm:text-base text-slate-400 font-normal leading-relaxed max-w-md">
@@ -581,19 +582,22 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
 
                 {/* Hidden / Managed IDKit Request Widget */}
                 {rpContext && (
-                  <IDKitRequestWidget
-                    app_id={WORLD_APP_ID}
-                    action={WORLD_ACTION}
-                    rp_context={rpContext}
-                    allow_legacy_proofs={true}
-                    environment={WORLD_ENV}
-                    preset={selfieCheckLegacy()}
-                    open={worldWidgetOpen}
-                    onOpenChange={setWorldWidgetOpen}
-                    handleVerify={handleWorldVerify}
-                    onSuccess={handleWorldSuccess}
-                    onError={handleWorldError}
-                  />
+                  <>
+                    <IDKitRequestWidget
+                      app_id={WORLD_APP_ID}
+                      action={WORLD_ACTION}
+                      rp_context={rpContext}
+                      allow_legacy_proofs={true}
+                      environment={WORLD_ENV}
+                      preset={selfieCheckLegacy()}
+                      open={worldWidgetOpen}
+                      onOpenChange={setWorldWidgetOpen}
+                      handleVerify={handleWorldVerify}
+                      onSuccess={handleWorldSuccess}
+                      onError={handleWorldError}
+                    />
+                    <MobileWorldSimulatorLink open={worldWidgetOpen} />
+                  </>
                 )}
               </motion.div>
             )}
@@ -796,4 +800,3 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
     </div>
   );
 }
-

@@ -159,10 +159,14 @@
   body {
     font-family: "PP Mori", sans-serif;
     font-weight: 500;
+    min-height: 100dvh;
+    overflow-x: clip;
     @apply bg-black text-white;
   }
   html {
     font-family: "PP Mori", sans-serif;
+    min-width: 320px;
+    overflow-x: clip;
   }
   button, input, textarea, select {
     font: inherit;
