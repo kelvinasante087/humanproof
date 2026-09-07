@@ -6,6 +6,7 @@ import { usePrivy, useSendTransaction } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HumanSessionBanner, useHumanSession } from "@/components/human-session";
+import { useHumanProofSignIn } from "@/components/humanproof-signin";
 import {
   AIRDROP_APP_ID,
   CLAIM_CONTENT,
@@ -42,7 +43,7 @@ export default function AirdropPage() {
 }
 
 function Claim() {
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, user } = usePrivy();
   const { sendTransaction } = useSendTransaction();
   const { verified } = useHumanSession();
 
@@ -135,22 +136,11 @@ function Claim() {
 
   if (!ready) return <p className="text-muted-foreground text-sm">Loading…</p>;
 
-  if (!authenticated) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Sign in to claim</CardTitle>
-          <CardDescription>
-            The payout lands in your own invisible wallet — created for you when you sign in.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/">
-            <Button className="w-full">Go to HumanProof</Button>
-          </Link>
-        </CardContent>
-      </Card>
-    );
+  // The WALL — this app gates ENTRY, not just the action. Until this browser is a verified human,
+  // the claim sits behind "Sign in with HumanProof": one passkey tap re-establishes the verified
+  // session (no repeat World check), or routes a new user to create a credential first.
+  if (!verified) {
+    return <SignInWall />;
   }
 
   return (
@@ -194,22 +184,68 @@ function Claim() {
         ) : (
           <Button
             onClick={claim}
-            disabled={status === "claiming" || !verified || !airdropConfigured()}
+            disabled={status === "claiming" || !address || !airdropConfigured()}
           >
-            {status === "claiming" ? "Claiming…" : `Claim ${CLAIM_AMOUNT_DISPLAY} ${PROOF_SYMBOL}`}
+            {status === "claiming"
+              ? "Claiming…"
+              : !address
+                ? "Preparing your wallet…"
+                : `Claim ${CLAIM_AMOUNT_DISPLAY} ${PROOF_SYMBOL}`}
           </Button>
         )}
 
-        {!verified && status !== "done" && (
-          <p className="text-muted-foreground text-xs">
-            <Link href="/" className="underline underline-offset-2">
-              Verify with HumanProof
+        {status === "error" && message && <p className="text-destructive text-sm">{message}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * The "Sign in with HumanProof" wall — this app's auth moment. A returning credentialed human taps
+ * once, the passkey re-establishes their verified session, and the claim card opens. A new user is
+ * routed to create a credential first. The gate is real: the claim still enforces server-side
+ * (attest → 401 without a valid signed session), so the wall isn't a client-only lock.
+ *
+ * Honest framing: the demo apps share one deployment, so this tap signs the human in instantly on
+ * the same origin. In production an external app would redirect to HumanProof for the same one-tap
+ * sign-in — this is not cross-domain SSO.
+ */
+function SignInWall() {
+  const { signIn, busy, status, error, passkeyState } = useHumanProofSignIn();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Sign in with HumanProof</CardTitle>
+        <CardDescription>
+          This airdrop is for verified, unique humans — one claim each. Tap once with your passkey;
+          if you&apos;ve verified before, you&apos;re in instantly, with no repeat check.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <Button onClick={() => void signIn()} disabled={busy}>
+          {busy
+            ? passkeyState === "awaiting-passkey"
+              ? "Waiting for passkey…"
+              : "Signing in…"
+            : "Sign in with HumanProof"}
+        </Button>
+
+        {status === "onboarding" ? (
+          <p className="text-muted-foreground text-sm">
+            You don&apos;t have a HumanProof credential yet.{" "}
+            <Link href="/" className="font-medium underline underline-offset-2">
+              Create one
             </Link>{" "}
-            to claim — the payout is gated to real, unique humans.
+            — verify once, then it&apos;s one tap forever.
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-xs">
+            Verify once, then one passkey tap into any app on the layer.
           </p>
         )}
 
-        {status === "error" && message && <p className="text-destructive text-sm">{message}</p>}
+        {error && <p className="text-destructive text-sm">{error}</p>}
       </CardContent>
     </Card>
   );
