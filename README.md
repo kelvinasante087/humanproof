@@ -12,9 +12,17 @@ The internet is drowning in bots, fake accounts, and AI-generated everything. Hu
 - **Attest anything.** Any app calls one endpoint to attest that a verified human performed an action. The attestation is sealed onchain: a salted fingerprint of the human, a content hash of the action, the calling app's id, and a timestamp — never identity, never the content.
 - **Verify by anyone.** A public page confirms that a verified unique human did this, at this time, with no identity and no raw content revealed.
 
-## Showcase: fake-proof reviews
+## Showcase
 
-The demo app is a reviews product where only verified real humans can post. Every review carries proof it came from a genuine, unique person, so bots and review farms cannot get in, and one human cannot post twice.
+Two thin demo apps ride on the same `/attest` layer, showing the primitive from two angles.
+
+### Reviews — gate the action
+
+A reviews product where anyone can read, but only a verified human can post. Every posted review carries proof it came from a genuine, unique person and links to its public verify page — so bots and review farms can't get in, and one human can't review the same item twice. The door is open; the *action* is gated.
+
+### Airdrop — a real, Sybil-proof payout (Privy)
+
+A PROOF token airdrop where each human can claim exactly once. The claim is a real Privy embedded-wallet transaction on Base Sepolia — testnet value actually lands in the human's wallet and the balance changes on screen — with gas sponsored by Privy and a treasury top-up as a fallback. The one-claim-per-human block is keyed to the **nullifier, through `/attest`** — not the wallet, not the browser — so a second claim, or a fresh wallet, is refused. That is the "no one claims twice" guarantee for airdrops: only real, unique humans get paid, and only once. (PROOF token on Base Sepolia: [`0x14ee4a48038B04aCf56B1F7bcF94Db96f09f0FEe`](https://sepolia.basescan.org/address/0x14ee4a48038B04aCf56B1F7bcF94Db96f09f0FEe).)
 
 ## How it works
 
