@@ -42,7 +42,7 @@ const ONBOARDING_IMAGES = [
   {
     src: "/images/human-beanie.jpg",
     alt: "HumanProof Artwork 3",
-    caption: "Trusted across 150+ dApps",
+    caption: "Verify once · Reuse everywhere",
   },
 ];
 
@@ -721,7 +721,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                     Claim your ENS Name
                   </h2>
                   <p className="text-sm sm:text-base text-slate-400 font-normal leading-relaxed max-w-md">
-                    Choose your human handle. Issued on-chain to your embedded wallet with a private pairwise DID.
+                    Choose your human handle. Issued on-chain to your embedded wallet — only a verified human can claim one.
                   </p>
                 </div>
 
