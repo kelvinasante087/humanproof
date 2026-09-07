@@ -80,7 +80,7 @@ All application code and smart contracts in this repository were written from sc
 
 The brand and every screen were designed from scratch during ETHOnline 2026, from a locked direction — a deep-navy credential card, a teal verification mark, and a single indigo action — and finished in Figma. Direction and exported assets live in [`design/`](design/).
 
-Figma file: _add link_
+Figma file: [Credential Wallet Cards — v0.1](https://www.figma.com/design/ncK8uSrdsUefXuzwFEy2zO/Credential-Wallet-Cards-%E2%80%94-v0.1?node-id=0-1&p=f&t=wQHp5BdSg9GXOpS9-0)
 
 ---
 
