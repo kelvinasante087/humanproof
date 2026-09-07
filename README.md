@@ -12,6 +12,15 @@ The internet is drowning in bots, fake accounts, and AI-generated everything. Hu
 - **Attest anything.** Any app calls one endpoint to attest that a verified human performed an action. The attestation is sealed onchain: a salted fingerprint of the human, a content hash of the action, the calling app's id, and a timestamp — never identity, never the content.
 - **Verify by anyone.** A public page confirms that a verified unique human did this, at this time, with no identity and no raw content revealed.
 
+## A primitive, not a feature
+
+HumanProof is one call — *"is this a verified, unique human doing this thing? — and give me sealed proof"* — that a business drops in wherever it needs it. Same primitive, different placement:
+
+- **Reviews gates the ACTION** — the door is open, anyone can read; only *posting* requires a human. Frame: abuse prevention (no review farms).
+- **Airdrop gates the DOOR** — you *sign in as a verified human to enter*, then claim once. Frame: Sybil resistance (no bot farms draining the drop).
+
+One primitive, placed at the action in one app and at the entrance in the other. The business decides where the human check sits.
+
 ## Showcase
 
 Two thin demo apps ride on the same `/attest` layer, showing the primitive from two angles.
