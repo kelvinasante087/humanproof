@@ -32,3 +32,6 @@ convex/tsconfig.json
 .agents/
 .claude/
 skills-lock.json
+
+# Playwright CLI scratch output (not part of the app)
+.playwright-cli/
