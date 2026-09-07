@@ -169,3 +169,46 @@ ENSv2 (Sepolia hackathon contracts). **Stack:** viem 2.56, `@adraffy/ens-normali
 - **Positive, credit where due:** once you call the right resolver, ENS v2 resolution "just works."
   Our own PermissionedResolver proxy implemented ENSIP-10 `resolve()` and `supportsInterface`
   correctly with no extra work, and the whole root→TLD→parent→subname walk resolved in a single call.
+
+---
+
+# Privy — developer feedback (HumanProof)
+
+_Day 7: "Sign in with HumanProof" — a returning human taps their passkey and is re-recognized as a
+verified human, without re-running the World check. Notes from wiring Privy's returning-user
+passkey login + verifying it server-side._
+
+## (a) The three passkey hooks are easy to confuse — the types saved us
+
+- **2026-09-07 — Privy ships THREE passkey actions and the difference is the whole ballgame:**
+  `useSignupWithPasskey` (brand-new account), `useLoginWithPasskey` (returning user logs in), and
+  `useLinkWithPasskey` (bind a passkey to the already-logged-in account). Onboarding used *link*;
+  today's returning-user sign-in needed *login*. Picking the wrong one silently builds the wrong
+  flow. **Credit:** the installed `@privy-io/react-auth` TypeScript types made the distinction
+  unambiguous — `useLoginWithPasskey()` returns `{ loginWithPasskey, state }`, `loginWithPasskey`
+  resolves on a valid passkey, and `state.status` mirrors the link flow. We confirmed the exact
+  signature in the types before writing a line, and it matched. **Ask:** one docs table mapping the
+  three hooks to "new user / returning user / bind to existing account" would stop people reaching
+  for the wrong one.
+
+## (b) Server-side token verification — clean, and no extra secret
+
+- **2026-09-07 — verifying "who is this Privy user" on the server needs no `@privy-io/server-auth`
+  and no new secret.** The client's access token (`usePrivy().getAccessToken()`) is a standard
+  ES256 JWT: issuer `privy.io`, audience = the app id, subject = the user DID. We verified it with
+  `jose` against Privy's PUBLIC JWKS at `https://auth.privy.io/api/v1/apps/<appId>/jwks.json` —
+  the app id we already had was enough, so nothing secret entered this path. This is exactly what
+  let us make sign-in a *real* server-verified session (the browser can't forge which account it
+  is) rather than a client-only flag. **Credit:** the token claims were standard and the JWKS
+  endpoint worked first try. **Minor ask:** the docs lean on the hosted `server-auth` SDK; a short
+  "verify with any JWKS library" snippet (issuer/audience/JWKS URL) would help anyone who wants to
+  avoid the extra dependency — it's genuinely a few lines.
+
+## (c) Positive — the returning-user flow is the reuse story, delivered
+
+- **2026-09-07** — one `loginWithPasskey()` tap → we read the access token → verified it
+  server-side → looked the human's credential up → re-issued the same signed verification cookie a
+  World check produces. The passkey *is* the one-tap key back into the layer, and Privy's embedded
+  wallet was already present for the same account, so the airdrop payout worked in the same session
+  with no extra sign-in. The invisible-wallet + passwordless + native-passkey combo is exactly the
+  "feels like signing into an app" experience Privy pitches.

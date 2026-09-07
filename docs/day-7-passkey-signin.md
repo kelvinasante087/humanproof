@@ -163,3 +163,36 @@ and as the token audience. The only schema change is the optional `privyUserId` 
 5. A user with **no credential** is routed to onboarding (`/`) from either app's auth moment.
 6. A **forged/absent** session is still **401** on `/api/attest` (server-side gate intact).
 7. `next build` green; the Vercel site stays public.
+
+---
+
+## As built (2026-09-07)
+
+Shipped and verified; the existing flow is intact and the site stays green + public.
+
+- **Session carries the fingerprint.** A verified session token now holds either the raw nullifier
+  (onboarding) or the salted nullifier hash (a passkey re-login). Downstream gating is identical;
+  the raw nullifier is still never stored.
+- **Account link recorded.** `credentials` gained an optional `privyUserId` (+ `by_privyUser`
+  index) written at credential completion — the server-side map from a Privy account to its
+  anonymous credential. Nothing new about the person; third-party `/attest` callers still never
+  learn who the human is.
+- **Passkey sign-in endpoint.** `POST /api/session/login` verifies Privy's access token against
+  Privy's public JWKS (proven account, not claimed), looks up the credential, and re-issues the
+  same signed verification cookie a World check produces — no repeat World check. No credential →
+  `needsOnboarding`; missing/forged token → 401; store not provisioned → 503. No new secret.
+- **Reviews = open door.** Anyone browses; clicking Post while unverified raises "Sign in with
+  HumanProof" at that moment — one passkey tap, then the same submit seals.
+- **Airdrop = the wall.** The claim sits behind a "Sign in with HumanProof" door; one tap in, or a
+  route to onboarding; the one-human-one-claim block is unchanged.
+
+**Verified end-to-end (live dev server, seal + Convex provisioned locally):**
+- Forged / absent / tampered cookie → **401** on `/api/attest` (the gate is not weakened).
+- A valid raw-nullifier session **and** a valid salted-hash (re-login) session both get past the
+  gate and **seal (200)** — the re-login shape is a real session the server accepts.
+- `/api/session/login` with no token / a garbage bearer → **401** (fails closed; not forgeable).
+- `/`, `/reviews`, `/airdrop`, `/developers` all render (200); no runtime errors in the dev log.
+- `next build` green; all routes present including `/api/session/login`.
+
+**Honest scope:** demo-sized reuse on one shared origin. In production an external app would
+redirect to HumanProof for the same one-tap sign-in; cross-domain SSO is the pitch, not built here.
