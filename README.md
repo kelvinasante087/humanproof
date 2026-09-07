@@ -1,5 +1,7 @@
 # HumanProof
 
+**Live demo → [humanproof-flame.vercel.app](https://humanproof-flame.vercel.app)**
+
 **The verified-human layer.** Prove that a real, unique human did something, sealed onchain, without storing any personal data.
 
 Built for [ETHOnline 2026](https://ethglobal.com/events/ethonline2026).
