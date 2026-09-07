@@ -63,6 +63,8 @@ function Claim() {
   }, [address]);
 
   useEffect(() => {
+    // Load the on-chain balance on mount; setState runs after the awaited RPC call, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshBalance();
   }, [refreshBalance]);
 

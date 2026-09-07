@@ -45,6 +45,8 @@ export function HumanSessionProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
+    // Fetch the session once on mount; setState runs after the awaited fetch, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
   }, [refresh]);
 
