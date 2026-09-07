@@ -15,7 +15,15 @@ export default defineSchema({
     nullifierHash: v.string(), // salt(nullifier), decimal string — never the raw value
     name: v.string(),
     createdAt: v.number(),
-  }).index("by_nullifier", ["nullifierHash"]),
+    // The Privy account (DID) that owns this credential. Recorded so a returning human can sign
+    // back in with their passkey (Day 7): we verify their Privy login server-side and look their
+    // credential up by this id, then re-issue the verified session — without re-running the World
+    // check. It's an opaque account handle, not personal data; the raw nullifier is still never
+    // stored. Optional: older rows (pre-Day-7) and any DB-degraded claim won't have it.
+    privyUserId: v.optional(v.string()),
+  })
+    .index("by_nullifier", ["nullifierHash"])
+    .index("by_privyUser", ["privyUserId"]),
 
   // One row per sealed action. dedupeKey = hash(nullifierHash | appId | contentHash).
   seals: defineTable({

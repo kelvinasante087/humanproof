@@ -8,15 +8,33 @@ import { v, ConvexError } from "convex/values";
  * registrar enforces the same line on-chain). A repeat human throws ALREADY_RECORDED.
  */
 export const record = mutation({
-  args: { nullifierHash: v.string(), name: v.string() },
-  handler: async (ctx, { nullifierHash, name }) => {
+  args: { nullifierHash: v.string(), name: v.string(), privyUserId: v.optional(v.string()) },
+  handler: async (ctx, { nullifierHash, name, privyUserId }) => {
     const existing = await ctx.db
       .query("credentials")
       .withIndex("by_nullifier", (q) => q.eq("nullifierHash", nullifierHash))
       .unique();
     if (existing) throw new ConvexError({ code: "ALREADY_RECORDED" });
-    await ctx.db.insert("credentials", { nullifierHash, name, createdAt: Date.now() });
+    await ctx.db.insert("credentials", { nullifierHash, name, privyUserId, createdAt: Date.now() });
     return { recorded: true };
+  },
+});
+
+/**
+ * Look up a credential by the Privy account (DID) that owns it. Powers "Sign in with HumanProof":
+ * after a returning human's passkey login is verified server-side, we find their existing
+ * credential here and re-issue the verified session — no repeat World check. Returns the salted
+ * hash (to rebuild the session) + the name (for the banner), or null if this account has no
+ * credential yet (the caller then routes them to onboarding). Never exposes the raw nullifier.
+ */
+export const getByPrivyUser = query({
+  args: { privyUserId: v.string() },
+  handler: async (ctx, { privyUserId }) => {
+    const row = await ctx.db
+      .query("credentials")
+      .withIndex("by_privyUser", (q) => q.eq("privyUserId", privyUserId))
+      .unique();
+    return row ? { nullifierHash: row.nullifierHash, name: row.name } : null;
   },
 });
 

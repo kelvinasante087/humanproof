@@ -25,7 +25,7 @@ function client(): ConvexHttpClient {
 
 const recordCredentialRef = makeFunctionReference<
   "mutation",
-  { nullifierHash: string; name: string },
+  { nullifierHash: string; name: string; privyUserId?: string },
   { recorded: boolean }
 >("credentials:record");
 
@@ -34,6 +34,12 @@ const getCredentialByNullifierRef = makeFunctionReference<
   { nullifierHash: string },
   { name: string } | null
 >("credentials:getByNullifier");
+
+const getCredentialByPrivyUserRef = makeFunctionReference<
+  "query",
+  { privyUserId: string },
+  { nullifierHash: string; name: string } | null
+>("credentials:getByPrivyUser");
 
 const reserveSealRef = makeFunctionReference<
   "mutation",
@@ -92,9 +98,13 @@ function convexCode(err: unknown): string | undefined {
 }
 
 /** Record a completed credential. Throws AlreadyRecordedError if this human already has one. */
-export async function recordCredential(nullifierHash: string, name: string): Promise<void> {
+export async function recordCredential(
+  nullifierHash: string,
+  name: string,
+  privyUserId?: string,
+): Promise<void> {
   try {
-    await client().mutation(recordCredentialRef, { nullifierHash, name });
+    await client().mutation(recordCredentialRef, { nullifierHash, name, privyUserId });
   } catch (err) {
     if (convexCode(err) === "ALREADY_RECORDED") throw new AlreadyRecordedError();
     throw err;
@@ -139,4 +149,15 @@ export async function getSealByRef(sealRef: string): Promise<PublicSeal | null> 
 export async function getCredentialName(nullifierHash: string): Promise<string | null> {
   const row = await client().query(getCredentialByNullifierRef, { nullifierHash });
   return row?.name ?? null;
+}
+
+/**
+ * The credential owned by a Privy account (DID) — its salted hash + name, or null if none. Used by
+ * the passkey sign-in endpoint to rebuild the verified session for a returning human. Never exposes
+ * the raw nullifier (it isn't stored).
+ */
+export async function getCredentialByPrivyUser(
+  privyUserId: string,
+): Promise<{ nullifierHash: string; name: string } | null> {
+  return await client().query(getCredentialByPrivyUserRef, { privyUserId });
 }
