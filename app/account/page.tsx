@@ -12,6 +12,7 @@ import {
 } from "@/components/credential-card";
 import { CheckCircle2, ChevronDown, Sparkles, Coins, ArrowUpRight } from "lucide-react";
 import { proofBalanceOf, nativeBalanceOf } from "@/lib/airdrop/config";
+import { AvatarPicker } from "@/components/avatar-context";
 
 /**
  * The signed-in client home — where a verified human lands after completing (or re-syncing) their
@@ -187,6 +188,11 @@ export default function AccountPage() {
             {/* Dropdown Content */}
             {showAdvanced && (
               <div className="pt-6 pb-2 flex flex-col gap-6 animate-in fade-in-0 duration-200">
+                {/* Profile picture */}
+                <div className="pb-6 border-b border-white/10">
+                  <AvatarPicker />
+                </div>
+
                 {/* Card Colour Theme Customizer */}
                 <div className="pb-6 border-b border-white/10">
                   <CredentialColorwayPicker value={cardColorway} onChange={chooseColorway} />
