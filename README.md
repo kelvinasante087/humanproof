@@ -35,6 +35,16 @@ HumanProof is one primitive any app can call: *"is this a verified, unique human
 
 An outside app plugs in with a single request to `/attest` (a content hash of the action + its app id); the verified human comes from their HumanProof session, and the app gets back a seal reference and an on-chain transaction — never anything about who the human is.
 
+## Identity: a name only a verified human can claim (ENS v2)
+
+Part of the credential is a portable handle — `<name>.humanproof.eth`, issued on ENS v2 (Sepolia). Names are minted by a from-scratch on-chain registrar, `HumanProofRegistrar` ([`0x18489F37F6dE05AFa970A427cF3652281cFc8d4c`](https://sepolia.etherscan.io/address/0x18489F37F6dE05AFa970A427cF3652281cFc8d4c)), whose claim condition lives in the contract, not the app:
+
+- The claim requires an **issuer-signed EIP-712 "humanity voucher"** — evidence that HumanProof's server verified this person as a real, unique human (via World Selfie Check) and authorized exactly this claimant and label.
+- The registrar keeps an on-chain **one-nullifier-one-name ledger**: each human's nullifier can claim exactly once.
+- The registrar is the *only* minter of subnames (its own registrar role is granted, HumanProof's revoked), so a name can be issued **only** to a verified, unique human — that rule is enforced on-chain.
+
+Honest boundary: the "is this a unique human?" check is World's, performed off-chain; the contract enforces the issuer attestation plus on-chain uniqueness. No World proof is faked on-chain. Names resolve on Sepolia through the ENS v2 Universal Resolver.
+
 ## Privacy
 
 Nothing personal is stored. World returns a zero-knowledge proof, not data. Onchain we keep only anonymous attestations. Verify and discard, by design.
