@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 /**
@@ -38,7 +38,24 @@ type SessionState = {
 
 const HumanSessionContext = createContext<HumanSession | null>(null);
 
-export function HumanSessionProvider({ children }: { children: React.ReactNode }) {
+export function HumanSessionProvider({
+  children,
+  getAccessToken,
+  authKey,
+}: {
+  children: React.ReactNode;
+  /**
+   * Optional Privy access-token getter. When present we send it to `/api/session`, which lets the
+   * server tell us WHO this is from the proven Privy account even after the 1-hour World session
+   * has expired — so the dashboard keeps your name instead of forgetting you.
+   */
+  getAccessToken?: () => Promise<string | null>;
+  /**
+   * Changes whenever the Privy auth state settles or switches account. We re-ask on every change,
+   * because the first fetch can land before Privy is ready (no token yet = no durable identity).
+   */
+  authKey?: string;
+}) {
   const [state, setState] = useState<SessionState>({
     loading: true,
     verified: false,
@@ -46,9 +63,26 @@ export function HumanSessionProvider({ children }: { children: React.ReactNode }
     credentialed: null,
   });
 
+  // Held in a ref so `refresh` stays referentially stable no matter how the getter is memoized —
+  // a changing `refresh` would retrigger the mount effect below on every render.
+  const getAccessTokenRef = useRef(getAccessToken);
+  useEffect(() => {
+    getAccessTokenRef.current = getAccessToken;
+  }, [getAccessToken]);
+
   const refresh = useCallback(async () => {
     try {
-      const r = await fetch("/api/session", { cache: "no-store" });
+      const headers: Record<string, string> = {};
+      const getToken = getAccessTokenRef.current;
+      if (getToken) {
+        try {
+          const token = await getToken();
+          if (token) headers.Authorization = `Bearer ${token}`;
+        } catch {
+          // No token (signed out, or Privy not ready) — identity simply falls back to the cookie.
+        }
+      }
+      const r = await fetch("/api/session", { cache: "no-store", headers });
       const d = await r.json();
       setState({
         loading: false,
@@ -62,10 +96,11 @@ export function HumanSessionProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
-    // Fetch the session once on mount; setState runs after the awaited fetch, not synchronously.
+    // Fetch on mount, and again whenever the Privy auth state settles or changes (sign in, sign
+    // out, account switch). setState runs after the awaited fetch, not synchronously.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
-  }, [refresh]);
+  }, [refresh, authKey]);
 
   return (
     <HumanSessionContext.Provider value={{ ...state, refresh }}>
