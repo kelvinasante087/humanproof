@@ -35,3 +35,6 @@ skills-lock.json
 
 # Playwright CLI scratch output (not part of the app)
 .playwright-cli/
+
+# Playwright scratch output (not part of the app)
+output/
