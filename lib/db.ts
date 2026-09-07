@@ -95,11 +95,20 @@ export type PublicSeal = {
   createdAt: number;
 };
 
+/** Safe fields used by the signed-in activity feed. */
+export type AccountSeal = PublicSeal & { sealRef: string };
+
 const getSealByRefRef = makeFunctionReference<
   "query",
   { sealRef: string },
   PublicSeal | null
 >("seals:getByRef");
+
+const listSealsByNullifierRef = makeFunctionReference<
+  "query",
+  { nullifierHash: string },
+  AccountSeal[]
+>("seals:listByNullifier");
 
 /** This human already has a credential recorded (DB-layer uniqueness). */
 export class AlreadyRecordedError extends Error {
@@ -175,6 +184,11 @@ export async function releaseSeal(id: string): Promise<void> {
 /** Public read for the verify page: a sealed action's safe fields by its reference, or null. */
 export async function getSealByRef(sealRef: string): Promise<PublicSeal | null> {
   return await client().query(getSealByRefRef, { sealRef });
+}
+
+/** Finalized seals belonging to the signed-in human, newest first. */
+export async function listSealsByNullifier(nullifierHash: string): Promise<AccountSeal[]> {
+  return await client().query(listSealsByNullifierRef, { nullifierHash });
 }
 
 /** The ENS name this human claimed, by their salted nullifier hash — or null. Best-effort display. */

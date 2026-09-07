@@ -39,3 +39,16 @@ export async function GET() {
   }
   return NextResponse.json({ verified: true, name });
 }
+
+/** Clear the reusable HumanProof browser session when the account signs out. */
+export async function DELETE() {
+  const jar = await cookies();
+  jar.set(WORLD_SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+  return NextResponse.json({ signedOut: true });
+}

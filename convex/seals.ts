@@ -61,3 +61,29 @@ export const getByRef = query({
     };
   },
 });
+
+/**
+ * Server-consumed account history for one anonymous human fingerprint. The Next route derives the
+ * fingerprint from the signed World session cookie; it is never accepted from the browser. Keep
+ * this bounded so an established account cannot turn into an unbounded dashboard read.
+ */
+export const listByNullifier = query({
+  args: { nullifierHash: v.string() },
+  handler: async (ctx, { nullifierHash }) => {
+    const rows = await ctx.db
+      .query("seals")
+      .withIndex("by_nullifier", (q) => q.eq("nullifierHash", nullifierHash))
+      .order("desc")
+      .take(50);
+
+    return rows
+      .filter((row) => Boolean(row.sealRef))
+      .map((row) => ({
+        sealRef: row.sealRef!,
+        appId: row.appId,
+        contentHash: row.contentHash,
+        txHash: row.txHash ?? null,
+        createdAt: row.createdAt,
+      }));
+  },
+});
