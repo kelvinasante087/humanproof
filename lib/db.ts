@@ -4,14 +4,18 @@
  * so we talk to Convex over HTTP with ConvexHttpClient and reference functions by name (no
  * dependency on convex/_generated, which only exists after `npx convex dev`).
  *
- * If NEXT_PUBLIC_CONVEX_URL isn't set yet (before the founder provisions Convex), `dbConfigured()`
+ * If the Convex URL isn't set yet (before the founder provisions Convex), `dbConfigured()`
  * is false and callers degrade gracefully instead of crashing — the site stays green.
+ *
+ * We read `CONVEX_URL` first (a private, server-only var — this URL is only ever used here in
+ * route handlers, never in the browser), falling back to `NEXT_PUBLIC_CONVEX_URL` for local dev
+ * where that's what `.env.local` carries. Either name works; the value is the Convex deployment URL.
  */
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { ConvexError } from "convex/values";
 
-const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+const url = process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
 
 /** True once the Convex deployment URL is configured. */
 export function dbConfigured(): boolean {
@@ -19,7 +23,7 @@ export function dbConfigured(): boolean {
 }
 
 function client(): ConvexHttpClient {
-  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
+  if (!url) throw new Error("CONVEX_URL is not set");
   return new ConvexHttpClient(url);
 }
 
