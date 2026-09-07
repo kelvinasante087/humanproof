@@ -23,7 +23,9 @@ import { useHumanSession } from "@/components/human-session";
  * apps share one deployment. In production an external app would redirect to HumanProof for the
  * same one-tap sign-in — this is not cross-domain SSO.
  */
-export type SignInResult = { ok: true } | { ok: false; needsOnboarding?: boolean };
+export type SignInResult =
+  | { ok: true; name?: string | null }
+  | { ok: false; needsOnboarding?: boolean };
 
 export type SignInStatus = "idle" | "signing" | "onboarding" | "error";
 
@@ -62,7 +64,7 @@ export function useHumanProofSignIn() {
       if (res.ok && data?.verified) {
         await refresh(); // shared session updates → banner + gated surfaces unlock
         setStatus("idle");
-        return { ok: true };
+        return { ok: true, name: typeof data.name === "string" ? data.name : null };
       }
 
       if (res.ok && data?.needsOnboarding) {

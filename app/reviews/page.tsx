@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HumanSessionBanner, useHumanSession } from "@/components/human-session";
+import { useHumanProofSignIn } from "@/components/humanproof-signin";
 import {
   REVIEW_ITEMS,
   SEED_REVIEWS,
@@ -126,12 +127,15 @@ function ReviewForm({
 }) {
   const [stars, setStars] = useState(5);
   const [body, setBody] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The passkey sign-in is raised HERE, at the Post moment — the open-door pattern. Anyone can
+  // type and read; only sealing the review needs a verified human.
+  const { signIn, busy: signingIn, status: signInStatus, error: signInError, passkeyState } =
+    useHumanProofSignIn();
 
-  async function submit() {
-    setError(null);
-    setBusy(true);
+  async function doPost(author: string) {
+    setPosting(true);
     try {
       const res = await fetch("/api/attest", {
         method: "POST",
@@ -143,26 +147,36 @@ function ReviewForm({
       });
       const data = await res.json();
       if (res.ok) {
-        onPosted({
-          author: authorName ?? "you — verified human",
-          stars,
-          body,
-          sealId: data.sealId,
-        });
+        onPosted({ author, stars, body, sealId: data.sealId });
         setBody("");
         setStars(5);
         return;
       }
-      if (res.status === 401) setError("Only a verified human can post. Verify first ↑");
+      if (res.status === 401) setError("Only a verified human can post. Tap “Sign in with HumanProof”.");
       else if (res.status === 409) setError("You've already reviewed this item as this human.");
       else if (res.status === 503) setError("Sealing is being provisioned — try once the layer is live.");
       else setError(data.error || "Couldn't post that review.");
     } catch {
       setError("Network error — please try again.");
     } finally {
-      setBusy(false);
+      setPosting(false);
     }
   }
+
+  async function submit() {
+    setError(null);
+    // Verified already (from onboarding or the other app) → seal straight away.
+    if (verified) {
+      await doPost(authorName ?? "you — verified human");
+      return;
+    }
+    // Not verified: one passkey tap re-establishes the verified session, then the SAME post seals.
+    const r = await signIn();
+    if (!r.ok) return; // needsOnboarding / cancelled / error surfaced below
+    await doPost(r.name ?? authorName ?? "you — verified human");
+  }
+
+  const busy = posting || signingIn;
 
   return (
     <div className="flex flex-col gap-2 border-t pt-4">
@@ -188,18 +202,34 @@ function ReviewForm({
         className="border-input focus-visible:ring-ring w-full rounded-md border bg-transparent px-3 py-2 text-sm focus-visible:ring-1 focus-visible:outline-none"
       />
       <Button onClick={submit} disabled={busy || !body.trim()}>
-        {busy ? "Posting…" : "Post review"}
+        {posting
+          ? "Posting…"
+          : signingIn
+            ? passkeyState === "awaiting-passkey"
+              ? "Waiting for passkey…"
+              : "Signing in…"
+            : verified
+              ? "Post review"
+              : "Sign in with HumanProof to post"}
       </Button>
-      {!verified && (
+      {!verified && signInStatus !== "onboarding" && (
         <p className="text-muted-foreground text-xs">
-          You can type, but posting seals the action to a real human.{" "}
-          <Link href="/" className="underline underline-offset-2">
-            Verify with HumanProof
-          </Link>{" "}
-          to post.
+          Anyone can read and type — posting seals the review to a real human. One passkey tap signs
+          you in; no new verification.
         </p>
       )}
-      {error && <p className="text-destructive text-sm">{error}</p>}
+      {signInStatus === "onboarding" && (
+        <p className="text-muted-foreground text-xs">
+          You don&apos;t have a HumanProof credential yet.{" "}
+          <Link href="/" className="underline underline-offset-2">
+            Create one
+          </Link>{" "}
+          — it takes a minute, then you can post.
+        </p>
+      )}
+      {(error || signInError) && (
+        <p className="text-destructive text-sm">{error || signInError}</p>
+      )}
     </div>
   );
 }
