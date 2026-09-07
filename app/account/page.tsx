@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { useHumanSession } from "@/components/human-session";
 import {
   CredentialCard,
-  CredentialColorwayPicker,
   credentialColorways,
   type CredentialColorway,
 } from "@/components/credential-card";
-import { CheckCircle2, ChevronDown, Sparkles, Coins, ArrowUpRight } from "lucide-react";
 import { proofBalanceOf, nativeBalanceOf } from "@/lib/airdrop/config";
-import { AvatarPicker } from "@/components/avatar-context";
+import { AccountGuard } from "@/components/account-page-shell";
 
 /**
  * The signed-in client home — where a verified human lands after completing (or re-syncing) their
@@ -21,23 +18,17 @@ import { AvatarPicker } from "@/components/avatar-context";
  * (ENS name, verified state). Guests are bounced to the landing page.
  */
 export default function AccountPage() {
-  const { ready, authenticated, user } = usePrivy();
+  const { user } = usePrivy();
   const { verified, name } = useHumanSession();
-  const router = useRouter();
   const [proofBalance, setProofBalance] = useState<string>("0");
   const [ethBalance, setEthBalance] = useState<string>("0.0000");
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [cardColorway, setCardColorway] = useState<CredentialColorway>(() => {
+  const [cardColorway] = useState<CredentialColorway>(() => {
     if (typeof window === "undefined") return "charcoal";
     const saved = window.localStorage.getItem("humanproof-card-colorway");
     return saved && saved in credentialColorways ? (saved as CredentialColorway) : "charcoal";
   });
 
   const wallet = user?.wallet?.address;
-
-  useEffect(() => {
-    if (ready && !authenticated) router.replace("/");
-  }, [ready, authenticated, router]);
 
   useEffect(() => {
     if (wallet) {
@@ -50,24 +41,8 @@ export default function AccountPage() {
     }
   }, [wallet]);
 
-  const chooseColorway = (colorway: CredentialColorway) => {
-    setCardColorway(colorway);
-    window.localStorage.setItem("humanproof-card-colorway", colorway);
-  };
-
-  if (!ready || !authenticated) {
-    return (
-      <main className="min-h-screen w-full bg-black text-white flex items-center justify-center">
-        <p className="text-slate-400 text-sm">Loading your account…</p>
-      </main>
-    );
-  }
-
-  const email = typeof user?.email?.address === "string" ? user.email.address : undefined;
-  const hasPasskey = user?.linkedAccounts?.some((a) => a.type === "passkey") ?? false;
-  const shortWallet = wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : "—";
-
   return (
+    <AccountGuard>
     <main className="min-h-screen w-full bg-black text-white relative">
       <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 lg:px-12 py-10 sm:py-14 flex flex-col gap-10">
         {/* Header */}
@@ -167,61 +142,9 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* Premium Collapsible Advanced Section (Hairline Divider Style) */}
-          <div className="w-full pt-4">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="group flex items-center justify-between w-full pb-4 border-b border-white/10 hover:border-white/25 transition-colors cursor-pointer"
-              aria-expanded={showAdvanced}
-            >
-              <span className="font-heading text-sm font-medium tracking-wide text-white/70 group-hover:text-white transition-colors">
-                Advanced
-              </span>
-              <ChevronDown
-                className={`w-4 h-4 text-white/50 group-hover:text-white transition-transform duration-300 ${
-                  showAdvanced ? "rotate-180" : "rotate-0"
-                }`}
-              />
-            </button>
-
-            {/* Dropdown Content */}
-            {showAdvanced && (
-              <div className="pt-6 pb-2 flex flex-col gap-6 animate-in fade-in-0 duration-200">
-                {/* Profile picture */}
-                <div className="pb-6 border-b border-white/10">
-                  <AvatarPicker />
-                </div>
-
-                {/* Card Colour Theme Customizer */}
-                <div className="pb-6 border-b border-white/10">
-                  <CredentialColorwayPicker value={cardColorway} onChange={chooseColorway} />
-                </div>
-
-                {/* Account & Security Metadata */}
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-4 text-sm">
-                    <span className="text-white/50">Device bound</span>
-                    <span className={`font-medium flex items-center gap-1.5 ${hasPasskey ? "text-emerald-400" : "text-white/40"}`}>
-                      <CheckCircle2 className="w-4 h-4" /> {hasPasskey ? "Passkey active" : "No passkey"}
-                    </span>
-                  </div>
-                  {email && (
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4 text-sm">
-                      <span className="text-white/50">Account</span>
-                      <span className="text-white font-medium">{email}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/50">Embedded wallet</span>
-                    <span className="text-white font-medium">{wallet ?? shortWallet}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </main>
+    </AccountGuard>
   );
 }

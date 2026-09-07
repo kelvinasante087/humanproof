@@ -3,31 +3,33 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { useHumanSession } from "@/components/human-session";
 import { useAvatar, avatarSrc } from "@/components/avatar-context";
 import {
   Search,
   User,
-  ShieldCheck,
   Fingerprint,
   RotateCcw,
   Puzzle,
   Sparkles,
   ArrowRight,
   LogOut,
+  Settings,
+  ChevronUp,
   Menu,
   X,
 } from "lucide-react";
 
 export function AccountSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = usePrivy();
-  const { verified, name } = useHumanSession();
+  const { name } = useHumanSession();
   const { avatarId } = useAvatar();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [helpMenuOpen, setHelpMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const email = typeof user?.email?.address === "string" ? user.email.address : undefined;
@@ -42,30 +44,30 @@ export function AccountSidebar() {
     },
     {
       label: "Security & Passkeys",
-      href: "/account#security",
+      href: "/account/security",
       icon: Fingerprint,
-      active: false,
+      active: pathname === "/account/security",
     },
     {
       label: "Activity & Proofs",
-      href: "/account#activity",
+      href: "/account/activity",
       icon: RotateCcw,
-      active: false,
+      active: pathname === "/account/activity",
     },
   ];
 
   const ecosystemItems = [
     {
       label: "Connected Apps",
-      href: "/reviews",
+      href: "/account/apps",
       icon: Puzzle,
-      active: pathname === "/reviews",
+      active: pathname === "/account/apps",
     },
     {
       label: "Updates",
-      href: "/account#updates",
+      href: "/account/updates",
       icon: Sparkles,
-      active: false,
+      active: pathname === "/account/updates",
       badge: "New",
     },
   ];
@@ -118,13 +120,13 @@ export function AccountSidebar() {
                 key={item.label}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                className={`flex items-center gap-3 border-l px-3.5 py-2.5 text-xs font-medium transition-all ${
                   item.active
-                    ? "bg-white text-black font-semibold shadow-sm"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
+                    ? "border-white text-white font-semibold"
+                    : "border-transparent text-white hover:border-white/40"
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${item.active ? "text-black" : "text-white/50"}`} />
+                <Icon className="w-4 h-4 shrink-0 text-white" />
                 <span>{item.label}</span>
               </Link>
             );
@@ -143,18 +145,18 @@ export function AccountSidebar() {
                 key={item.label}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                className={`flex items-center justify-between border-l px-3.5 py-2.5 text-xs font-medium transition-all ${
                   item.active
-                    ? "bg-white text-black font-semibold shadow-sm"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
+                    ? "border-white text-white font-semibold"
+                    : "border-transparent text-white hover:border-white/40"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 shrink-0 ${item.active ? "text-black" : "text-white/50"}`} />
+                  <Icon className="w-4 h-4 shrink-0 text-white" />
                   <span>{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className="text-[9px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/20">
+                  <span className="text-[9px] font-semibold tracking-wider uppercase text-white">
                     {item.badge}
                   </span>
                 )}
@@ -201,8 +203,15 @@ export function AccountSidebar() {
       </div>
 
       {/* Bottom Profile Dock */}
-      <div className="pt-4 border-t border-white/10 flex items-center justify-between px-1 relative">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div className="pt-4 border-t border-white/10 px-1 relative">
+        <button
+          type="button"
+          onClick={() => setProfileMenuOpen((open) => !open)}
+          aria-expanded={profileMenuOpen}
+          aria-haspopup="menu"
+          className="flex w-full items-center justify-between gap-2 border-l border-transparent p-1.5 text-left transition hover:border-white/40"
+        >
+          <span className="flex items-center gap-2.5 min-w-0">
           <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/10 shrink-0">
             <Image
               src={avatarSrc(avatarId)}
@@ -215,40 +224,42 @@ export function AccountSidebar() {
           <span className="text-xs font-medium text-white truncate max-w-[130px]">
             {displayName}
           </span>
-        </div>
+          </span>
+          <ChevronUp className={`h-3.5 w-3.5 shrink-0 text-white/35 transition-transform ${profileMenuOpen ? "rotate-180" : ""}`} />
+        </button>
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setHelpMenuOpen(!helpMenuOpen)}
-            className="w-6 h-6 rounded-full bg-[#1b1926] hover:bg-white/20 border border-white/10 text-white/80 hover:text-white flex items-center justify-center text-xs font-medium transition-colors cursor-pointer shrink-0"
-            title="Help & Account"
-          >
-            ?
-          </button>
-
-          {helpMenuOpen && (
-            <div className="absolute bottom-8 right-0 w-44 bg-[#141418] border border-white/15 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 z-50 animate-in fade-in-0 zoom-in-95 duration-150 font-sans">
+          {profileMenuOpen && (
+            <div role="menu" className="absolute bottom-14 left-1 right-1 bg-black border-y border-white/25 shadow-2xl py-1.5 flex flex-col z-50 animate-in fade-in-0 duration-150 font-sans">
               <Link
-                href="/developers"
-                onClick={() => setHelpMenuOpen(false)}
-                className="px-3 py-2 rounded-lg text-xs text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                href="/account/settings"
+                role="menuitem"
+                onClick={() => {
+                  setProfileMenuOpen(false);
+                  setMobileOpen(false);
+                }}
+                className="flex items-center gap-2 border-b border-white/10 px-3 py-2.5 text-xs text-white transition-colors hover:bg-white/5"
               >
-                Help & Docs
+                <Settings className="h-3.5 w-3.5" />
+                Settings
               </Link>
               <button
-                onClick={() => {
-                  setHelpMenuOpen(false);
-                  logout();
+                role="menuitem"
+                onClick={async () => {
+                  setProfileMenuOpen(false);
+                  try {
+                    await fetch("/api/session", { method: "DELETE" });
+                  } finally {
+                    await logout();
+                    router.replace("/");
+                  }
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg text-xs text-rose-400 hover:bg-rose-500/15 transition-colors flex items-center gap-2 cursor-pointer"
+                className="w-full text-left px-3 py-2.5 text-xs text-white hover:bg-white/5 transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign out</span>
               </button>
             </div>
           )}
-        </div>
       </div>
     </div>
   );
