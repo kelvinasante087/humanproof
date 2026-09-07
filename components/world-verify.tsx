@@ -9,6 +9,7 @@ import {
 } from "@worldcoin/idkit";
 import { WORLD_APP_ID, WORLD_ACTION, WORLD_ENV } from "@/lib/world";
 import { Button } from "@/components/ui/button";
+import { MobileWorldSimulatorLink } from "@/components/mobile-world-simulator-link";
 
 /**
  * The proof-of-human step. After sign-in, the user proves once (via World's
@@ -114,19 +115,22 @@ export function WorldVerify({ onVerified }: { onVerified?: () => void }) {
       {message && <p className="text-destructive text-sm">{message}</p>}
 
       {rpContext && (
-        <IDKitRequestWidget
-          app_id={WORLD_APP_ID}
-          action={WORLD_ACTION}
-          rp_context={rpContext}
-          allow_legacy_proofs={true}
-          environment={WORLD_ENV}
-          preset={selfieCheckLegacy()}
-          open={open}
-          onOpenChange={setOpen}
-          handleVerify={handleVerify}
-          onSuccess={handleSuccess}
-          onError={handleError}
-        />
+        <>
+          <IDKitRequestWidget
+            app_id={WORLD_APP_ID}
+            action={WORLD_ACTION}
+            rp_context={rpContext}
+            allow_legacy_proofs={true}
+            environment={WORLD_ENV}
+            preset={selfieCheckLegacy()}
+            open={open}
+            onOpenChange={setOpen}
+            handleVerify={handleVerify}
+            onSuccess={handleSuccess}
+            onError={handleError}
+          />
+          <MobileWorldSimulatorLink open={open} />
+        </>
       )}
     </div>
   );
