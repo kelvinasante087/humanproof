@@ -21,6 +21,9 @@ export default defineSchema({
     // check. It's an opaque account handle, not personal data; the raw nullifier is still never
     // stored. Optional: older rows (pre-Day-7) and any DB-degraded claim won't have it.
     privyUserId: v.optional(v.string()),
+    // The profile avatar this human chose (one of the ten avatar ids, e.g. "avatar_03"). Optional:
+    // absent until they pick one, in which case the UI falls back to a deterministic default.
+    avatar: v.optional(v.string()),
   })
     .index("by_nullifier", ["nullifierHash"])
     .index("by_privyUser", ["privyUserId"]),

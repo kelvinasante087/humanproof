@@ -80,3 +80,37 @@ export const getByNullifier = query({
     return row ? { name: row.name } : null;
   },
 });
+
+/**
+ * Read the profile avatar this human chose, by their salted nullifier hash — or null if they
+ * haven't picked one (the UI then shows a deterministic default). Keyed server-side; the nullifier
+ * is never exposed.
+ */
+export const getAvatar = query({
+  args: { nullifierHash: v.string() },
+  handler: async (ctx, { nullifierHash }) => {
+    const row = await ctx.db
+      .query("credentials")
+      .withIndex("by_nullifier", (q) => q.eq("nullifierHash", nullifierHash))
+      .unique();
+    return { avatar: row?.avatar ?? null };
+  },
+});
+
+/**
+ * Set (or change) this human's profile avatar, keyed by their salted nullifier hash. Patches the
+ * existing credential row; a human with no row yet (verified but never recorded) is a no-op rather
+ * than an error, so a returning human's avatar just persists once their row exists.
+ */
+export const setAvatar = mutation({
+  args: { nullifierHash: v.string(), avatar: v.string() },
+  handler: async (ctx, { nullifierHash, avatar }) => {
+    const row = await ctx.db
+      .query("credentials")
+      .withIndex("by_nullifier", (q) => q.eq("nullifierHash", nullifierHash))
+      .unique();
+    if (!row) return { saved: false };
+    await ctx.db.patch(row._id, { avatar });
+    return { saved: true };
+  },
+});

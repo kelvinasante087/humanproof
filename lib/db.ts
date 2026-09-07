@@ -49,6 +49,18 @@ const getCredentialByNullifierRef = makeFunctionReference<
   { name: string } | null
 >("credentials:getByNullifier");
 
+const getAvatarRef = makeFunctionReference<
+  "query",
+  { nullifierHash: string },
+  { avatar: string | null }
+>("credentials:getAvatar");
+
+const setAvatarRef = makeFunctionReference<
+  "mutation",
+  { nullifierHash: string; avatar: string },
+  { saved: boolean }
+>("credentials:setAvatar");
+
 const getCredentialByPrivyUserRef = makeFunctionReference<
   "query",
   { privyUserId: string },
@@ -169,6 +181,18 @@ export async function getSealByRef(sealRef: string): Promise<PublicSeal | null> 
 export async function getCredentialName(nullifierHash: string): Promise<string | null> {
   const row = await client().query(getCredentialByNullifierRef, { nullifierHash });
   return row?.name ?? null;
+}
+
+/** The profile avatar this human chose, by their salted nullifier hash — or null if unset. */
+export async function getCredentialAvatar(nullifierHash: string): Promise<string | null> {
+  const { avatar } = await client().query(getAvatarRef, { nullifierHash });
+  return avatar;
+}
+
+/** Persist this human's chosen avatar, keyed by their salted nullifier hash. */
+export async function setCredentialAvatar(nullifierHash: string, avatar: string): Promise<boolean> {
+  const { saved } = await client().mutation(setAvatarRef, { nullifierHash, avatar });
+  return saved;
 }
 
 /**

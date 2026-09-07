@@ -1,37 +1,19 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { usePrivy } from "@privy-io/react-auth";
+import { AVATAR_IDS, avatarSrc, defaultAvatarFor, isAvatarId, type AvatarId } from "@/lib/avatars";
 
 /**
- * Profile avatars. Every human is assigned one of ten SVG avatars *deterministically* from their
- * stable account id — so the same person always gets the same face, and it's never a fixed default
- * for everyone. They can override it in settings; the choice is remembered per-account in the
- * browser (mirrors how the card colorway is persisted). Move to Convex if cross-device sync is
- * needed later — this context is the single seam the rest of the UI reads from.
+ * Profile avatars. Every human is assigned one of ten avatars *deterministically* from their stable
+ * account id — so the same person always gets the same face, never a shared default. Their chosen
+ * avatar is persisted in Convex (keyed server-side by the verified session) via /api/profile/avatar,
+ * so it follows them across devices. This context is the single seam the sidebar and picker read
+ * from; the deterministic default shows until (and unless) a saved choice loads.
  */
 
-export const AVATAR_IDS = [
-  "avatar_01", "avatar_02", "avatar_03", "avatar_04", "avatar_05",
-  "avatar_06", "avatar_07", "avatar_08", "avatar_09", "avatar_10",
-] as const;
-
-export type AvatarId = (typeof AVATAR_IDS)[number];
-
-export const avatarSrc = (id: AvatarId): string => `/avatars/${id}.svg`;
-
-/** Stable, well-distributed index from a seed string → one of the ten avatars. */
-export function defaultAvatarFor(seed: string): AvatarId {
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return AVATAR_IDS[(h >>> 0) % AVATAR_IDS.length];
-}
-
-const storageKey = (seed: string) => `humanproof-avatar:${seed}`;
+export { AVATAR_IDS, avatarSrc, type AvatarId } from "@/lib/avatars";
 
 type AvatarContextValue = {
   avatarId: AvatarId;
@@ -42,37 +24,56 @@ type AvatarContextValue = {
 const AvatarContext = createContext<AvatarContextValue | null>(null);
 
 export function AvatarProvider({ children }: { children: React.ReactNode }) {
-  const { user } = usePrivy();
+  const { user, authenticated, ready } = usePrivy();
   const seed = user?.id ?? user?.wallet?.address ?? "guest";
-  const fallback = useMemo(() => defaultAvatarFor(seed), [seed]);
-  const [avatarId, setAvatarIdState] = useState<AvatarId>(fallback);
+  // Remount on account change so state re-seeds to that human's deterministic default, then the
+  // saved choice (if any) loads over it — no hydration mismatch, no setState-in-effect.
+  return (
+    <AvatarProviderInner key={seed} seed={seed} enabled={ready && authenticated}>
+      {children}
+    </AvatarProviderInner>
+  );
+}
 
-  // Resolve to the saved choice for this account (or its deterministic default) once we know who
-  // the human is — and whenever the account changes.
+function AvatarProviderInner({
+  seed,
+  enabled,
+  children,
+}: {
+  seed: string;
+  enabled: boolean;
+  children: React.ReactNode;
+}) {
+  const [avatarId, setAvatarIdState] = useState<AvatarId>(() => defaultAvatarFor(seed));
+
+  // Load the saved avatar from Convex once we know who the human is. setState happens in the async
+  // callback (after mount), so the first render stays on the deterministic default.
   useEffect(() => {
-    let stored: string | null = null;
-    try {
-      stored = window.localStorage.getItem(storageKey(seed));
-    } catch {
-      stored = null;
-    }
-    // Intentional post-mount sync from localStorage (an external store). Server and first client
-    // render both use the deterministic default, so this avoids a hydration mismatch by design.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setAvatarIdState(
-      stored && (AVATAR_IDS as readonly string[]).includes(stored)
-        ? (stored as AvatarId)
-        : defaultAvatarFor(seed),
-    );
-  }, [seed]);
+    if (!enabled) return;
+    let cancelled = false;
+    fetch("/api/profile/avatar")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data && isAvatarId(data.avatar)) setAvatarIdState(data.avatar);
+      })
+      .catch(() => {
+        /* keep the deterministic default on any failure */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
 
   const setAvatarId = (id: AvatarId) => {
-    setAvatarIdState(id);
-    try {
-      window.localStorage.setItem(storageKey(seed), id);
-    } catch {
-      // Non-fatal — a private window just won't remember the choice.
-    }
+    setAvatarIdState(id); // optimistic — reflect the choice immediately
+    if (!enabled) return;
+    fetch("/api/profile/avatar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatar: id }),
+    }).catch(() => {
+      /* best-effort; the optimistic value stays for this session */
+    });
   };
 
   return (
@@ -91,7 +92,7 @@ export function useAvatar(): AvatarContextValue {
   return ctx;
 }
 
-/** The settings control: pick one of the ten avatars. Selection persists via the context. */
+/** The settings control: pick one of the ten avatars. Selection persists to Convex via the context. */
 export function AvatarPicker() {
   const { avatarId, setAvatarId, avatars } = useAvatar();
   return (
