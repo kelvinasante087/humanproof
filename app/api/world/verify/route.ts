@@ -9,6 +9,7 @@ import {
   NullifierNotFoundError,
 } from "@/lib/world";
 import { sealSession } from "@/lib/session";
+import { verifyPrivyUserId } from "@/lib/privy-auth";
 
 /**
  * Verifies a World Selfie Check proof server-side and, on success, holds the
@@ -43,6 +44,18 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { verified: false, error: "WORLD_RP_ID is not configured." },
       { status: 500 },
+    );
+  }
+
+  // A verification is issued TO an account. Without this the resulting cookie is bearer authority
+  // for whoever holds the browser next — which is exactly how one person ended up signed in as
+  // another. Prove the account first, then bind the session to it.
+  const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const privyUserId = await verifyPrivyUserId(bearer);
+  if (!privyUserId) {
+    return NextResponse.json(
+      { verified: false, error: "Sign in before verifying your humanity." },
+      { status: 401 },
     );
   }
 
@@ -129,7 +142,7 @@ export async function POST(request: Request) {
   // cookie value is HMAC-signed (sealSession) so a hand-crafted cookie can't forge
   // a verified session. The raw nullifier is recoverable only server-side, via readSession.
   const jar = await cookies();
-  jar.set(WORLD_SESSION_COOKIE, sealSession(nullifier), {
+  jar.set(WORLD_SESSION_COOKIE, sealSession(nullifier, privyUserId), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HumanSessionBanner, useHumanSession } from "@/components/human-session";
 import { useHumanProofSignIn } from "@/components/humanproof-signin";
+import { useAuthedFetch } from "@/components/use-authed-fetch";
 import {
   AIRDROP_APP_ID,
   CLAIM_CONTENT,
@@ -46,6 +47,8 @@ function Claim() {
   const { ready, user } = usePrivy();
   const { sendTransaction } = useSendTransaction();
   const { verified } = useHumanSession();
+  // Sealing and the gas top-up are bound to the calling account server-side.
+  const authedFetch = useAuthedFetch();
 
   const address = user?.wallet?.address;
   const [balance, setBalance] = useState<string | null>(null);
@@ -76,7 +79,7 @@ function Claim() {
     // 1. The one-per-human gate: /attest seals this claim, deduped on the salted nullifier.
     let seal: { sealId?: string } = {};
     try {
-      const res = await fetch("/api/attest", {
+      const res = await authedFetch("/api/attest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ appId: AIRDROP_APP_ID, contentHash: CLAIM_CONTENT }),
@@ -117,7 +120,7 @@ function Claim() {
       try {
         ({ hash } = await sendTransaction(tx, { sponsor: true, address }));
       } catch {
-        await fetch("/api/airdrop/fund", {
+        await authedFetch("/api/airdrop/fund", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ address }),

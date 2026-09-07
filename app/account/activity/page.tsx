@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowUpRight, CheckCircle2, Clock3, FileCheck2, Gift } from "lucide-react";
 import { AccountPageShell, AccountTile } from "@/components/account-page-shell";
+import { useAuthedFetch } from "@/components/use-authed-fetch";
 import { BASE_SEPOLIA_EXPLORER, proofBalanceOf } from "@/lib/airdrop/config";
 
 type Seal = {
@@ -29,13 +30,14 @@ function sourceLabel(appId: string) {
 
 export default function ActivityPage() {
   const { user } = usePrivy();
+  const authedFetch = useAuthedFetch();
   const [seals, setSeals] = useState<Seal[]>([]);
   const [activityAvailable, setActivityAvailable] = useState<boolean | null>(null);
   const [proofBalance, setProofBalance] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/account/activity", { cache: "no-store" })
+    authedFetch("/api/account/activity", { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
         if (!cancelled) {
@@ -49,7 +51,7 @@ export default function ActivityPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authedFetch]);
 
   useEffect(() => {
     const address = user?.wallet?.address;

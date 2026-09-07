@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
-import { readSession } from "@/lib/session";
+import { readBoundSession } from "@/lib/account-session";
 import { saltedNullifierHash } from "@/lib/ens/registrar";
 import { dbConfigured, getCredentialAvatar, setCredentialAvatar } from "@/lib/db";
 import { isAvatarId } from "@/lib/avatars";
@@ -17,19 +15,23 @@ import { isAvatarId } from "@/lib/avatars";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Derive the salted nullifier hash from the current session, or null if not a verified session. */
-async function currentNullifierHash(): Promise<string | null> {
-  const jar = await cookies();
-  const session = readSession(jar.get(WORLD_SESSION_COOKIE)?.value);
-  if (!session) return null;
+/**
+ * Derive the salted nullifier hash for the caller — but only from a session bound to the account
+ * they can prove. A stale cookie from a previous account must not read or overwrite that person's
+ * profile.
+ */
+async function currentNullifierHash(request: Request): Promise<string | null> {
+  const bound = await readBoundSession(request);
+  if (!bound) return null;
+  const { session } = bound;
   // Onboarding sessions carry the raw nullifier (hash it); passkey re-login sessions already carry
   // the salted hash. Either way we key on the salted hash.
   return session.nullifierHash ?? saltedNullifierHash(session.nullifier!).toString();
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!dbConfigured()) return NextResponse.json({ avatar: null });
-  const nullifierHash = await currentNullifierHash();
+  const nullifierHash = await currentNullifierHash(request);
   if (!nullifierHash) return NextResponse.json({ avatar: null });
   try {
     const avatar = await getCredentialAvatar(nullifierHash);
@@ -40,7 +42,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const nullifierHash = await currentNullifierHash();
+  const nullifierHash = await currentNullifierHash(request);
   if (!nullifierHash) {
     return NextResponse.json({ error: "not_verified" }, { status: 401 });
   }

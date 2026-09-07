@@ -60,7 +60,8 @@ export async function POST(request: Request) {
   // 3. Re-issue the verified session from the fingerprint — same locked-down cookie world/verify
   // sets, so the server-side gate accepts it identically.
   const jar = await cookies();
-  jar.set(WORLD_SESSION_COOKIE, sealSessionFromHash(credential.nullifierHash), {
+  // Bound to the account we just proved, so this cookie can never speak for anyone else.
+  jar.set(WORLD_SESSION_COOKIE, sealSessionFromHash(credential.nullifierHash, privyUserId), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

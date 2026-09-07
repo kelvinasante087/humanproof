@@ -14,6 +14,7 @@ import {
 import { WORLD_APP_ID, WORLD_ACTION, WORLD_ENV } from "@/lib/world";
 import { MobileWorldSimulatorLink } from "@/components/mobile-world-simulator-link";
 import { useHumanSession } from "@/components/human-session";
+import { useAuthedFetch } from "@/components/use-authed-fetch";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
@@ -65,6 +66,9 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
   // otherwise the dashboard we navigate to still shows the pre-signup state (no name, not verified)
   // until a manual page reload.
   const { refresh: refreshHumanSession } = useHumanSession();
+  // Verification and the claim are bound to this account server-side, so they must prove who's
+  // calling. See components/use-authed-fetch.
+  const authedFetch = useAuthedFetch();
 
   // Leave onboarding for the signed-in home (account details live there, not in this modal).
   function goToDashboard() {
@@ -187,7 +191,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
 
   async function handleWorldVerify(result: IDKitResult) {
     setWorldStatus("verifying");
-    const res = await fetch("/api/world/verify", {
+    const res = await authedFetch("/api/world/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(result),
@@ -234,14 +238,11 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
     setEnsError(null);
     setClaimingEns(true);
     try {
-      const res = await fetch("/api/ens/claim", {
+      const res = await authedFetch("/api/ens/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          label: ensLabel.trim(),
-          address: walletAddress,
-          privyUserId: user?.id,
-        }),
+        // The owning account is taken from the verified token server-side, never sent from here.
+        body: JSON.stringify({ label: ensLabel.trim(), address: walletAddress }),
       });
       const data = await res.json();
       if (!res.ok) {

@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
-import { readSession } from "@/lib/session";
+import { readBoundSession } from "@/lib/account-session";
 import { saltedNullifierHash } from "@/lib/ens/registrar";
 import {
   sealAction,
@@ -34,11 +32,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const jar = await cookies();
-  const session = readSession(jar.get(WORLD_SESSION_COOKIE)?.value);
-  if (!session) {
+  // The verified session must belong to the account making this call — a cookie left behind by a
+  // previous account must never seal an action as that other human.
+  const bound = await readBoundSession(request);
+  if (!bound) {
     return NextResponse.json({ error: "Verify you're human first." }, { status: 401 });
   }
+  const { session } = bound;
 
   let body: { contentHash?: unknown; appId?: unknown };
   try {

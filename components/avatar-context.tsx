@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { usePrivy } from "@privy-io/react-auth";
+import { useAuthedFetch } from "@/components/use-authed-fetch";
 import { AVATAR_IDS, avatarSrc, defaultAvatarFor, isAvatarId, type AvatarId } from "@/lib/avatars";
 
 /**
@@ -45,13 +46,15 @@ function AvatarProviderInner({
   children: React.ReactNode;
 }) {
   const [avatarId, setAvatarIdState] = useState<AvatarId>(() => defaultAvatarFor(seed));
+  // The avatar is keyed to the human behind the calling account, so these calls must prove it.
+  const authedFetch = useAuthedFetch();
 
   // Load the saved avatar from Convex once we know who the human is. setState happens in the async
   // callback (after mount), so the first render stays on the deterministic default.
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    fetch("/api/profile/avatar")
+    authedFetch("/api/profile/avatar")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!cancelled && data && isAvatarId(data.avatar)) setAvatarIdState(data.avatar);
@@ -62,12 +65,12 @@ function AvatarProviderInner({
     return () => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, [enabled, authedFetch]);
 
   const setAvatarId = (id: AvatarId) => {
     setAvatarIdState(id); // optimistic — reflect the choice immediately
     if (!enabled) return;
-    fetch("/api/profile/avatar", {
+    authedFetch("/api/profile/avatar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ avatar: id }),

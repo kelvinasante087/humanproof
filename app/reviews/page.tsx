@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HumanSessionBanner, useHumanSession } from "@/components/human-session";
 import { useHumanProofSignIn } from "@/components/humanproof-signin";
+import { useAuthedFetch } from "@/components/use-authed-fetch";
 import {
   REVIEW_ITEMS,
   SEED_REVIEWS,
@@ -148,11 +149,13 @@ function ReviewForm({
   // type and read; only sealing the review needs a verified human.
   const { signIn, busy: signingIn, status: signInStatus, error: signInError, passkeyState } =
     useHumanProofSignIn();
+  // Sealing is bound to the calling account server-side, so the request must prove who it is.
+  const authedFetch = useAuthedFetch();
 
   async function doPost(author: string) {
     setPosting(true);
     try {
-      const res = await fetch("/api/attest", {
+      const res = await authedFetch("/api/attest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

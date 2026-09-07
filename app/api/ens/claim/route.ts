@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
-import { readSession } from "@/lib/session";
+import { readBoundSession } from "@/lib/account-session";
 import { claimViaRegistrar, resolveName, saltedNullifierHash, AlreadyClaimedError, NameUnavailableError } from "@/lib/ens/registrar";
 import { InvalidEnsNameError, normalizeSubname } from "@/lib/ens/normalize";
 import { PARENT_NAME } from "@/lib/ens/config";
@@ -53,11 +51,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const jar = await cookies();
-  const session = readSession(jar.get(WORLD_SESSION_COOKIE)?.value);
-  if (!session) {
+  // The verification MUST belong to the account claiming. Without this, a stale cookie from a
+  // previous account let this claim fall into the "already claimed" recovery path and rewrite that
+  // other person's credential onto this account — a silent account takeover.
+  const bound = await readBoundSession(request);
+  if (!bound) {
     return NextResponse.json({ error: "Verify you're human first." }, { status: 401 });
   }
+  const { session, privyUserId } = bound;
   // Claiming a name needs the RAW nullifier (to build the on-chain humanity voucher). A passkey
   // re-login session carries only the salted hash — such a human already holds a credential and
   // never re-claims, so reject cleanly rather than pretend we can build a voucher.
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { label?: unknown; address?: unknown; privyUserId?: unknown };
+  let body: { label?: unknown; address?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -78,8 +79,9 @@ export async function POST(request: Request) {
 
   const label = typeof body.label === "string" ? body.label : "";
   const address = typeof body.address === "string" ? body.address : "";
-  // The owning Privy account (DID), recorded so a passkey re-login can find this credential later.
-  const privyUserId = typeof body.privyUserId === "string" ? body.privyUserId : undefined;
+  // NOTE: the owning account comes from `bound.privyUserId` above — the token we verified — and is
+  // deliberately NOT read from the body. A client-supplied account id here would let anyone attach
+  // a credential to someone else's account.
   if (!label.trim()) return NextResponse.json({ error: "Please choose a name." }, { status: 400 });
   if (!address) return NextResponse.json({ error: "Missing wallet address." }, { status: 400 });
 
@@ -106,7 +108,7 @@ export async function POST(request: Request) {
     // it as a successful re-sync rather than an error. No re-claim, no new nullifier — their real
     // one is reused; only its salted hash is ever stored.
     if (err instanceof AlreadyClaimedError) {
-      if (dbConfigured() && privyUserId) {
+      if (dbConfigured()) {
         try {
           const { name } = normalizeSubname(label, PARENT_NAME);
           // Confirm this is a name they actually own before recording it. If it resolves to a

@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
-import { readSession } from "@/lib/session";
+import { readBoundSession } from "@/lib/account-session";
 import { saltedNullifierHash } from "@/lib/ens/registrar";
 import { dbConfigured, listSealsByNullifier } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Account-only activity. Identity is derived exclusively from the signed, httpOnly session. */
-export async function GET() {
-  const jar = await cookies();
-  const session = readSession(jar.get(WORLD_SESSION_COOKIE)?.value);
-  if (!session) return NextResponse.json({ error: "Human verification required." }, { status: 401 });
+/**
+ * Account-only activity. Identity comes from the signed session AND the caller's proven Privy
+ * account — never the cookie alone, so one account can't read another's proof history.
+ */
+export async function GET(request: Request) {
+  const bound = await readBoundSession(request);
+  if (!bound) return NextResponse.json({ error: "Human verification required." }, { status: 401 });
+  const { session } = bound;
 
   if (!dbConfigured()) {
     return NextResponse.json({ seals: [], available: false });

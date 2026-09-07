@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { parseEther, getAddress } from "viem";
-import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
-import { readSession } from "@/lib/session";
+import { readBoundSession } from "@/lib/account-session";
 import { saltedNullifierHash } from "@/lib/ens/registrar";
 import { sealPublicClient, getSealWallet } from "@/lib/seal/config";
 import { dbConfigured, recordGasFunding, GasFundingBlockedError } from "@/lib/db";
@@ -28,11 +26,11 @@ const GAS_TOPUP = parseEther("0.0003"); // enough for one claim() on Base Sepoli
 const LOW_WATER = parseEther("0.0002"); // only fund wallets below this
 
 export async function POST(request: Request) {
-  const jar = await cookies();
-  const session = readSession(jar.get(WORLD_SESSION_COOKIE)?.value);
-  if (!session) {
+  const bound = await readBoundSession(request);
+  if (!bound) {
     return NextResponse.json({ error: "Verify you're human first." }, { status: 401 });
   }
+  const { session } = bound;
 
   let body: { address?: unknown };
   try {
