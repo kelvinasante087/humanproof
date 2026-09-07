@@ -2,14 +2,45 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@font-face {
+  font-family: 'PP Mori';
+  src: url('/fonts/PPMori-Regular.otf') format('opentype'),
+       local('PP Mori'), local('PPMori-Regular'), local('PPMori');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Mori';
+  src: url('/fonts/PPMori-SemiBold.otf') format('opentype'),
+       local('PP Mori SemiBold'), local('PPMori-SemiBold');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DX Lactos';
+  src: url('/fonts/dxlactos-regular-free-personal-use.otf') format('opentype'),
+       local('DX Lactos'), local('DXLactos'), local('DXLactos-Regular');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-heading,
+.font-serif-hero {
+  font-family: 'DX Lactos', sans-serif;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: "PP Mori", sans-serif;
+  --font-heading: "DX Lactos", sans-serif;
+  --font-mono: "PP Mori", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,38 +80,39 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  color-scheme: dark;
+  --background: oklch(0 0 0);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.16 0 0);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.16 0 0);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(1 0 0);
+  --primary-foreground: oklch(0 0 0);
+  --secondary: oklch(0.22 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.22 0 0);
+  --muted-foreground: oklch(1 0 0 / 62%);
+  --accent: oklch(0.22 0 0);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(1 0 0 / 45%);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0 0 0);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(1 0 0);
+  --sidebar-primary-foreground: oklch(0 0 0);
+  --sidebar-accent: oklch(0.22 0 0);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(1 0 0 / 45%);
 }
 
 .dark {
@@ -121,10 +153,50 @@
   * {
     @apply border-border outline-ring/50;
   }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "DX Lactos", sans-serif;
+  }
   body {
-    @apply bg-background text-foreground;
+    font-family: "PP Mori", sans-serif;
+    font-weight: 500;
+    @apply bg-black text-white;
   }
   html {
-    @apply font-sans;
+    font-family: "PP Mori", sans-serif;
   }
+  button, input, textarea, select {
+    font: inherit;
+  }
+}
+
+/* The original light demo pages used Slate text utilities. Keep their visual hierarchy as
+   white at different opacities so every surface now belongs to the same dark system. */
+@layer utilities {
+  .text-slate-100 { color: rgb(255 255 255 / 92%); }
+  .text-slate-200 { color: rgb(255 255 255 / 82%); }
+  .text-slate-300 { color: rgb(255 255 255 / 72%); }
+  .text-slate-400 { color: rgb(255 255 255 / 58%); }
+  .text-slate-500 { color: rgb(255 255 255 / 46%); }
+  .text-slate-600 { color: rgb(255 255 255 / 62%); }
+  .text-slate-700 { color: rgb(255 255 255 / 74%); }
+  .text-slate-800 { color: rgb(255 255 255 / 86%); }
+  .text-slate-900 { color: rgb(255 255 255); }
+}
+
+/* HumanProof typography is always white. Hierarchy comes from size, weight and spacing—not grey
+   copy or colored type. Status color remains available for non-text marks and backgrounds. */
+body :where(div, h1, h2, h3, h4, h5, h6, p, span, a, button, label, legend, li, dt, dd, code, pre, input, textarea, select, small, strong, em) {
+  color: #ffffff !important;
+}
+
+body :where(input, textarea)::placeholder {
+  color: #ffffff !important;
+  opacity: 1;
+}
+
+/* White-filled controls would erase white labels, so use the credential UI's dark hairline
+   treatment wherever an existing CTA previously used a solid white fill. */
+body :where(a, button)[class~="bg-white"] {
+  background: #0c0c0e !important;
+  border: 1px solid rgb(255 255 255 / 28%) !important;
 }
