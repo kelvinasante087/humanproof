@@ -55,7 +55,7 @@ type RpContext = {
 };
 
 export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, authenticated, user, logout } = usePrivy();
   const { sendCode, loginWithCode, state: emailState } = useLoginWithEmail();
   const { linkWithPasskey, state: passkeyState } = useLinkWithPasskey();
   const { createWallet } = useCreateWallet();
@@ -259,6 +259,36 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
       toast.error(msg);
     } finally {
       setClaimingEns(false);
+    }
+  }
+
+  /**
+   * Abandon a half-finished setup and leave nothing behind: clear the verification cookie, sign out
+   * of the account, and reset the flow. Nothing is committed to HumanProof until the name is
+   * claimed, so this genuinely discards the attempt rather than half-hiding it.
+   */
+  async function startOver() {
+    try {
+      await fetch("/api/session", { method: "DELETE" });
+    } catch {
+      // Clearing the cookie is best-effort; signing out below is what actually drops the account.
+    }
+    try {
+      await logout();
+    } finally {
+      setWorldVerified(false);
+      setClaimedEns(null);
+      setEnsLabel("");
+      setEmail("");
+      setCode("");
+      setWorldStatus("idle");
+      setWorldError(null);
+      setPasskeyError(null);
+      setEnsError(null);
+      setRpContext(null);
+      attemptedWallet.current = false;
+      await refreshHumanSession();
+      toast.success("Setup discarded — nothing was saved.");
     }
   }
 
@@ -792,6 +822,19 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Escape hatch: nothing is committed until the name is claimed, so leaving is clean. */}
+        {authenticated && currentStep < 5 && (
+          <div className="pt-4 text-center">
+            <button
+              type="button"
+              onClick={startOver}
+              className="text-[11px] font-medium text-slate-400 underline underline-offset-4 transition-colors hover:text-white"
+            >
+              Start over
+            </button>
+          </div>
+        )}
 
         {/* Footer Note */}
         <div className="text-[11px] text-slate-500 text-center pt-6 border-t border-white/5">

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { Menu, X } from "lucide-react";
 import { useOnboardingModal } from "@/components/onboarding-modal";
+import { useHumanSession } from "@/components/human-session";
 
 const privyConfigured = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 
@@ -55,12 +56,31 @@ function AuthActions({
   mobile?: boolean;
 }) {
   const { ready, authenticated } = usePrivy();
+  const { loading, credentialed } = useHumanSession();
 
   // Do not flash signed-out actions while Privy restores an existing browser session.
   if (!ready) return <span className={mobile ? "block h-16" : "h-9 w-28"} aria-hidden="true" />;
 
   if (!authenticated) {
     return <GuestActions openOnboarding={openOnboarding} closeMenu={closeMenu} mobile={mobile} />;
+  }
+
+  // Signed in but the credential was never finished: send them back into the flow rather than to a
+  // dashboard that has nothing to show. An unknown answer falls through to Dashboard (fail open).
+  if (!loading && credentialed === false) {
+    return (
+      <button
+        onClick={() => {
+          closeMenu?.();
+          openOnboarding();
+        }}
+        className={mobile
+          ? "w-full border-b border-white/10 px-6 py-5 text-left text-base font-semibold text-white transition-colors hover:bg-white/5"
+          : "cursor-pointer rounded-full bg-white px-5 py-2 font-semibold text-black shadow-sm transition-all duration-200 hover:bg-slate-200"}
+      >
+        Continue setup
+      </button>
+    );
   }
 
   return (
