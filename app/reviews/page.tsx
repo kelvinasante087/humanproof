@@ -28,7 +28,7 @@ function Stars({ n }: { n: number }) {
 
 function VerifiedBadge({ sealId }: { sealId?: string }) {
   const badge = (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-xs font-medium text-white">
       ✓ Verified human
     </span>
   );

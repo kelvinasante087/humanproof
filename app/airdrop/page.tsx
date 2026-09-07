@@ -150,7 +150,7 @@ function Claim() {
         <CardDescription>One human, one claim. Bots need not apply.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between rounded-lg border bg-slate-50 px-4 py-3">
+        <div className="flex items-baseline justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">
           <span className="text-muted-foreground text-sm">Your balance</span>
           <span className="text-2xl font-semibold tabular-nums">
             {balance ?? "…"}{" "}
@@ -159,17 +159,17 @@ function Claim() {
         </div>
 
         {!airdropConfigured() && (
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <p className="rounded-md border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-white">
             The airdrop goes live once the PROOF token is deployed. The button will work then.
           </p>
         )}
 
         {status === "blocked" ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+          <div className="rounded-md border border-rose-400/20 bg-rose-400/10 p-3 text-sm text-white">
             {message} A new wallet won&apos;t help — the block is on the human.
           </div>
         ) : status === "done" ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 p-3 text-sm text-white">
             ✓ {message}
             {sealId && (
               <>

@@ -37,9 +37,9 @@ function Footer() {
   return (
     <Link
       href="/"
-      className="text-xs text-slate-400 transition-colors hover:text-slate-600"
+      className="text-xs text-white/45 transition-colors hover:text-white"
     >
-      Verified by <span className="font-medium text-slate-500">HumanProof</span> — the
+      Verified by <span className="font-medium text-white/70">HumanProof</span> — the
       proof-of-human layer
     </Link>
   );
@@ -52,7 +52,7 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[id]">) 
   if (!dbConfigured()) {
     return (
       <Shell>
-        <div className="w-full rounded-2xl border bg-white p-6 text-center shadow-sm">
+        <div className="w-full rounded-2xl border border-white/10 bg-[#0c0c0e] p-6 text-center shadow-sm">
           <p className="text-sm text-slate-600">
             The verification store is being provisioned. This link will show its proof once the
             layer is live.
@@ -68,7 +68,7 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[id]">) 
   if (!seal) {
     return (
       <Shell>
-        <div className="w-full rounded-2xl border bg-white p-8 text-center shadow-sm">
+        <div className="w-full rounded-2xl border border-white/10 bg-[#0c0c0e] p-8 text-center shadow-sm">
           <h1 className="text-lg font-semibold">Nothing sealed here</h1>
           <p className="mt-2 text-sm text-slate-600">
             We couldn&apos;t find a sealed action for that reference.
@@ -88,9 +88,9 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[id]">) 
 
   return (
     <Shell>
-      <div className="w-full overflow-hidden rounded-2xl border bg-white shadow-sm">
+      <div className="w-full overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c0e] shadow-sm">
         {/* Emerald seal header */}
-        <div className="flex flex-col items-center gap-3 border-b bg-emerald-50 px-8 pt-8 pb-6 text-center">
+        <div className="flex flex-col items-center gap-3 border-b border-white/10 bg-emerald-500/10 px-8 pt-8 pb-6 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-3xl text-white shadow-sm">
             ✓
           </div>
@@ -121,7 +121,7 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[id]">) 
         </dl>
 
         {/* Receipt */}
-        <div className="border-t bg-slate-50 px-8 py-6">
+        <div className="border-t border-white/10 bg-white/[0.03] px-8 py-6">
           <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
             The trustless receipt
           </p>

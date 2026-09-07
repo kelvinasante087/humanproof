@@ -52,7 +52,7 @@ export function PasskeyStep({ unlocked }: { unlocked: boolean }) {
     return (
       <div className="flex flex-col gap-2 border-t pt-4">
         <span className="text-sm font-medium">Device secured</span>
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+        <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 p-3 text-sm text-white">
           <span className="font-medium">Passkey added ✓</span> — this credential
           is bound to your device. Only you can use it.
         </div>

@@ -239,7 +239,7 @@ export function CredentialCard({
 export function CredentialColorwayPicker({ value, onChange }: CredentialColorwayPickerProps) {
   return (
     <fieldset className="w-full max-w-[440px]">
-      <legend className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Card colour</legend>
+      <legend className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">Card colour</legend>
       <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label="Choose credential card colour">
         {(Object.entries(credentialColorways) as [CredentialColorway, (typeof credentialColorways)[CredentialColorway]][]).map(
           ([key, theme]) => {

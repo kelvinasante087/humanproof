@@ -73,9 +73,9 @@ export default function DevelopersPage() {
         </ul>
       </section>
 
-      <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
-        <h2 className="text-sm font-semibold text-emerald-900">The privacy guarantee</h2>
-        <p className="mt-2 text-sm text-emerald-800">
+      <section className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-5">
+        <h2 className="text-sm font-semibold text-white">The privacy guarantee</h2>
+        <p className="mt-2 text-sm text-white/70">
           The response never contains a name, an email, a wallet, or anything about who the human
           is. HumanProof proves a <span className="font-medium">real, unique</span> person acted —
           and forgets who. Each app gets its own unlinkable handle for a person, so no one can

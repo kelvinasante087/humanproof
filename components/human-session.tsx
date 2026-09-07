@@ -75,7 +75,7 @@ export function HumanSessionBanner({ appLabel }: { appLabel: string }) {
 
   if (loading) {
     return (
-      <div className="text-muted-foreground rounded-lg border bg-white/60 px-4 py-3 text-sm">
+      <div className="text-white/60 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm">
         Checking your HumanProof session…
       </div>
     );
@@ -83,7 +83,7 @@ export function HumanSessionBanner({ appLabel }: { appLabel: string }) {
 
   if (verified) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+      <div className="flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-white">
         <span aria-hidden>✓</span>
         <span>
           <span className="font-medium">
@@ -97,7 +97,7 @@ export function HumanSessionBanner({ appLabel }: { appLabel: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-1 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-1 rounded-lg border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-white sm:flex-row sm:items-center sm:justify-between">
       <span>You&apos;re here as a guest. Verify once to act as a real human.</span>
       <Link href="/" className="font-medium underline underline-offset-2">
         Verify with HumanProof →

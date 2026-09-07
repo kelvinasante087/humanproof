@@ -89,7 +89,7 @@ export function WorldVerify({ onVerified }: { onVerified?: () => void }) {
 
   if (status === "verified") {
     return (
-      <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+      <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 p-3 text-sm text-white">
         <span className="font-medium">Verified human ✓</span> — an anonymous proof
         is held for this session. No personal data stored.
       </div>

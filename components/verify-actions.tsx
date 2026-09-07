@@ -27,7 +27,7 @@ export function VerifyActions({ explorer }: { explorer: string | null }) {
           href={explorer}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 rounded-lg bg-slate-900 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-slate-800"
+          className="flex-1 rounded-lg bg-white px-4 py-2.5 text-center text-sm font-medium text-black transition-colors hover:bg-white/85"
         >
           View the on-chain proof ↗
         </a>
@@ -35,7 +35,7 @@ export function VerifyActions({ explorer }: { explorer: string | null }) {
       <button
         type="button"
         onClick={copyLink}
-        className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        className="flex-1 rounded-lg border border-white/15 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-white/10"
       >
         {copied ? "Link copied ✓" : "Copy proof link"}
       </button>
