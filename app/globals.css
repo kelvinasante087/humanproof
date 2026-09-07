@@ -204,3 +204,75 @@ body :where(a, button)[class~="bg-white"] {
   background: #0c0c0e !important;
   border: 1px solid rgb(255 255 255 / 28%) !important;
 }
+
+@keyframes credential-gold-pulse {
+  0%, 100% {
+    border-color: #f2bd43;
+    box-shadow:
+      0 0 4px rgb(255 197 67 / 55%),
+      0 0 10px rgb(255 176 32 / 28%),
+      inset 0 0 7px rgb(255 207 91 / 12%);
+  }
+  50% {
+    border-color: #ffe7a0;
+    box-shadow:
+      0 0 7px rgb(255 226 138 / 90%),
+      0 0 18px rgb(255 179 32 / 58%),
+      0 0 28px rgb(255 159 10 / 25%),
+      inset 0 0 10px rgb(255 218 115 / 25%);
+  }
+}
+
+@keyframes credential-gold-flow {
+  0%, 100% {
+    opacity: 0.72;
+    filter: brightness(0.9);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.45);
+  }
+}
+
+.credential-provider-node-active {
+  border-color: #f2bd43;
+  animation: credential-gold-pulse 2.4s ease-in-out infinite;
+}
+
+.credential-provider-link-active {
+  background: linear-gradient(90deg, #c88614, #ffe69a, #c88614);
+  box-shadow: 0 0 7px rgb(255 190 52 / 75%);
+  animation: credential-gold-flow 2.4s ease-in-out infinite;
+}
+
+.credential-provider-glyph-active {
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(88%)
+    sepia(58%)
+    saturate(935%)
+    hue-rotate(344deg)
+    brightness(104%)
+    contrast(102%);
+}
+
+.credential-provider-node-inactive {
+  border-color: rgb(255 255 255 / 35%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
+}
+
+.credential-provider-link-inactive {
+  background: rgb(255 255 255 / 28%);
+}
+
+.credential-provider-glyph-inactive {
+  opacity: 0.58;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .credential-provider-node-active,
+  .credential-provider-link-active {
+    animation: none;
+  }
+}

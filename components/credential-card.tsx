@@ -143,23 +143,54 @@ const providers = [
   { name: "ENS linked", src: "/brands/ens-symbol-white.svg" },
 ] as const;
 
-function LinkedCredentialIcons() {
+function LinkedCredentialIcons({
+  privyConnected,
+  worldVerified,
+  ensLinked,
+}: {
+  privyConnected: boolean;
+  worldVerified: boolean;
+  ensLinked: boolean;
+}) {
+  const providerStates = providers.map((provider, index) => ({
+    ...provider,
+    active: [privyConnected, worldVerified, ensLinked][index],
+  }));
+
   return (
     <div
       className="absolute right-[6.67%] top-[40.7%] flex w-[28.9%] items-center"
-      aria-label="Privy connected, World ID verified, ENS linked"
+      aria-label={providerStates
+        .map((provider) => `${provider.name}: ${provider.active ? "active" : "not connected"}`)
+        .join(", ")}
     >
-      {providers.map((provider, index) => (
+      {providerStates.map((provider, index) => {
+        const linkActive = index > 0 && provider.active && providerStates[index - 1].active;
+        return (
         <div key={provider.name} className="contents">
-          {index > 0 && <span className="-mx-[1px] h-px flex-1 bg-[#8ef2ce]" aria-hidden="true" />}
+          {index > 0 && (
+            <span
+              className={`${linkActive ? "credential-provider-link-active" : "credential-provider-link-inactive"} -mx-[1px] h-px flex-1`}
+              style={{ animationDelay: `${index * 180}ms` }}
+              aria-hidden="true"
+            />
+          )}
           <span
-            className="relative grid aspect-square w-[28%] shrink-0 place-items-center rounded-full border border-[#8ef2ce] bg-[#111d29] shadow-[0_2px_8px_rgba(0,0,0,0.18)]"
-            title={provider.name}
+            className={`${provider.active ? "credential-provider-node-active" : "credential-provider-node-inactive"} relative grid aspect-square w-[28%] shrink-0 place-items-center rounded-full border bg-[#11150f]`}
+            style={{ animationDelay: `${index * 180}ms` }}
+            title={`${provider.name}: ${provider.active ? "active" : "not connected"}`}
           >
-            <Image src={provider.src} alt="" width={18} height={18} className="h-[55%] w-[55%] object-contain" />
+            <Image
+              src={provider.src}
+              alt=""
+              width={18}
+              height={18}
+              className={`${provider.active ? "credential-provider-glyph-active" : "credential-provider-glyph-inactive"} h-[55%] w-[55%] object-contain`}
+            />
           </span>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -167,7 +198,7 @@ function LinkedCredentialIcons() {
 export function CredentialCard({
   name,
   wallet,
-  verified = true,
+  verified = false,
   credentialType = "VERIFIED HUMAN",
   chain = "ETH",
   colorway = "charcoal",
@@ -207,7 +238,11 @@ export function CredentialCard({
         </h2>
       </div>
 
-      <LinkedCredentialIcons />
+      <LinkedCredentialIcons
+        privyConnected={Boolean(wallet)}
+        worldVerified={verified}
+        ensLinked={Boolean(name && name.toLowerCase().endsWith(".eth"))}
+      />
 
       <p className="absolute left-[6.67%] top-[66.37%] font-mono text-[clamp(7px,2.4vw,9px)] tracking-[0.08em] opacity-75">
         {formatAddress(wallet)}
