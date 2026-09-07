@@ -1,7 +1,7 @@
 // Client-safe airdrop config. Contains NO secrets — only the public PROOF token address (bundling a
 // contract address in client code is fine), the claim amount, the chain, and small read helpers.
 // The token address is empty until scripts/airdrop/01-deploy-proof.mjs deploys and fills it.
-import { createPublicClient, http, formatUnits, encodeFunctionData, parseAbi, getAddress } from "viem";
+import { createPublicClient, http, formatUnits, formatEther, encodeFunctionData, parseAbi, getAddress } from "viem";
 import { baseSepolia } from "viem/chains";
 import state from "./proof.baseSepolia.json";
 
@@ -49,6 +49,15 @@ export async function proofBalanceOf(address: string): Promise<string> {
   });
   // Trim any fractional dust for display — claims are whole PROOF.
   return formatUnits(raw, 18).replace(/\.0+$/, "");
+}
+
+/**
+ * Read a wallet's native gas-token (ETH) balance on Base Sepolia, formatted to 4 dp for display
+ * (e.g. "0.0500"). Client-safe: reads through the same public Base Sepolia client, no secrets.
+ */
+export async function nativeBalanceOf(address: string): Promise<string> {
+  const raw = await client.getBalance({ address: getAddress(address) });
+  return Number(formatEther(raw)).toFixed(4);
 }
 
 /** Wait for a claim transaction to confirm on Base Sepolia. */
