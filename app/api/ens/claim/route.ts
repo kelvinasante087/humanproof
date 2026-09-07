@@ -5,7 +5,40 @@ import { readSession } from "@/lib/session";
 import { claimViaRegistrar, resolveName, saltedNullifierHash, AlreadyClaimedError, NameUnavailableError } from "@/lib/ens/registrar";
 import { InvalidEnsNameError, normalizeSubname } from "@/lib/ens/normalize";
 import { PARENT_NAME } from "@/lib/ens/config";
-import { recordCredential, linkCredentialAccount, dbConfigured } from "@/lib/db";
+import {
+  recordCredential,
+  linkCredentialAccount,
+  dbConfigured,
+  AlreadyRecordedError,
+} from "@/lib/db";
+
+/**
+ * Persist the completed credential, retrying briefly.
+ *
+ * The on-chain claim has already succeeded by this point, so a store failure must never fail the
+ * request. But this record IS what the dashboard reads to show a human their name — a silent
+ * single-attempt failure left people staring at a nameless card. So: retry a couple of times, and
+ * treat "already recorded" as the success it actually is.
+ */
+async function recordCredentialBestEffort(
+  nullifierHash: string,
+  name: string,
+  privyUserId?: string,
+): Promise<void> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await recordCredential(nullifierHash, name, privyUserId);
+      return;
+    } catch (err) {
+      if (err instanceof AlreadyRecordedError) return;
+      if (attempt === 3) {
+        console.error("[ens/claim] credential record failed after retries:", err);
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 150 * attempt));
+    }
+  }
+}
 
 /**
  * Claim <name>.humanproof.eth for the signed-in user — THROUGH the on-chain registrar.
@@ -59,11 +92,7 @@ export async function POST(request: Request) {
     // uniqueness, so this is a best-effort mirror: a failed write must not fail the claim the
     // user already paid for on-chain. Skipped cleanly until Convex is provisioned.
     if (dbConfigured()) {
-      try {
-        await recordCredential(saltedNullifierHash(nullifier).toString(), name, privyUserId);
-      } catch (dbErr) {
-        console.warn("[ens/claim] credential DB record skipped:", dbErr);
-      }
+      await recordCredentialBestEffort(saltedNullifierHash(nullifier).toString(), name, privyUserId);
     }
 
     return NextResponse.json({ name, resolved, txHash });
