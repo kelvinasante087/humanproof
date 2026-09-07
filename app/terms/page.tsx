@@ -31,14 +31,14 @@ export default function TermsPage() {
 
       <ContentSection heading="Not financial or legal advice">
         <p>
-          Nothing here is financial, investment, or legal advice. Don't rely on this demo for real
+          Nothing here is financial, investment, or legal advice. Don’t rely on this demo for real
           identity, custody, or financial decisions.
         </p>
       </ContentSection>
 
       <ContentSection heading="Acceptable use">
         <p>
-          Don't attempt to abuse, attack, or interfere with the service or other people's use of it.
+          Don’t attempt to abuse, attack, or interfere with the service or other people’s use of it.
           We may restrict access to keep the demo working for everyone.
         </p>
       </ContentSection>

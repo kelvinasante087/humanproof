@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <ContentPage
       title="Privacy"
       updated="September 2026"
-      intro="HumanProof is built so that proving you're human doesn't mean handing over who you are. This page explains what that means in practice."
+      intro="HumanProof is built so that proving you’re human doesn't mean handing over who you are. This page explains what that means in practice."
     >
       <ContentSection heading="This is a demo">
         <p>
@@ -21,10 +21,10 @@ export default function PrivacyPage() {
         </p>
       </ContentSection>
 
-      <ContentSection heading="What we deliberately don't collect">
+      <ContentSection heading="What we deliberately don’t collect">
         <p>
-          We don't ask for or store your legal name, your face, or any government ID. The personhood
-          check confirms uniqueness without those. Apps built on HumanProof learn only that you're a
+          We don’t ask for or store your legal name, your face, or any government ID. The personhood
+          check confirms uniqueness without those. Apps built on HumanProof learn only that you’re a
           verified, unique human.
         </p>
       </ContentSection>

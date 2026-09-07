@@ -25,7 +25,7 @@ export default function HowItWorksPage() {
       <ContentSection heading="2 · Get a reusable credential">
         <p>
           That check mints a HumanProof credential tied to a per-person secret. An embedded wallet
-          is created for you automatically as an anchor — there's nothing to fund and no seed
+          is created for you automatically as an anchor — there’s nothing to fund and no seed
           phrase to write down.
         </p>
       </ContentSection>
