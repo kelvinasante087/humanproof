@@ -171,13 +171,11 @@ function LinkedCredentialIcons({
           {index > 0 && (
             <span
               className={`${linkActive ? "credential-provider-link-active" : "credential-provider-link-inactive"} -mx-[1px] h-px flex-1`}
-              style={{ animationDelay: `${index * 180}ms` }}
               aria-hidden="true"
             />
           )}
           <span
             className={`${provider.active ? "credential-provider-node-active" : "credential-provider-node-inactive"} relative grid aspect-square w-[28%] shrink-0 place-items-center rounded-full border bg-[#11150f]`}
-            style={{ animationDelay: `${index * 180}ms` }}
             title={`${provider.name}: ${provider.active ? "active" : "not connected"}`}
           >
             <Image
