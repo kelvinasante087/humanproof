@@ -4,18 +4,28 @@
  * so we talk to Convex over HTTP with ConvexHttpClient and reference functions by name (no
  * dependency on convex/_generated, which only exists after `npx convex dev`).
  *
- * If the Convex URL isn't set yet (before the founder provisions Convex), `dbConfigured()`
- * is false and callers degrade gracefully instead of crashing — the site stays green.
+ * If the Convex URL isn't set yet (before Convex is provisioned), `dbConfigured()` is false and
+ * callers degrade gracefully instead of crashing — the site stays green.
  *
- * We read `CONVEX_URL` first (a private, server-only var — this URL is only ever used here in
- * route handlers, never in the browser), falling back to `NEXT_PUBLIC_CONVEX_URL` for local dev
- * where that's what `.env.local` carries. Either name works; the value is the Convex deployment URL.
+ * Production is PINNED to the app's prod Convex deployment (`elated-clownfish-975`) here in code.
+ * Why hardcode it: this URL is public (a deployment address, not a secret — it's only ever used
+ * server-side here, never sent to the browser), and the Vercel env var for it kept getting tangled
+ * across multiple Convex projects, repeatedly pointing the live site at the wrong/empty deployment.
+ * Pinning prod in code removes that fragile moving part — the live site can't drift again. To move
+ * prod to a different Convex deployment later, change PROD_CONVEX_URL. Local dev is unaffected: it
+ * reads `.env.local` (dev deployment `rare-fennec-188`) as before.
  */
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { ConvexError } from "convex/values";
 
-const url = process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
+/** The app's production Convex backend (public deployment address; see note above). */
+const PROD_CONVEX_URL = "https://elated-clownfish-975.convex.cloud";
+
+const url =
+  process.env.NODE_ENV === "production"
+    ? PROD_CONVEX_URL
+    : (process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL);
 
 /** True once the Convex deployment URL is configured. */
 export function dbConfigured(): boolean {
