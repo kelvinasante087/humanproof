@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { label?: unknown; address?: unknown };
+  let body: { label?: unknown; address?: unknown; privyUserId?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -44,6 +44,8 @@ export async function POST(request: Request) {
 
   const label = typeof body.label === "string" ? body.label : "";
   const address = typeof body.address === "string" ? body.address : "";
+  // The owning Privy account (DID), recorded so a passkey re-login can find this credential later.
+  const privyUserId = typeof body.privyUserId === "string" ? body.privyUserId : undefined;
   if (!label.trim()) return NextResponse.json({ error: "Please choose a name." }, { status: 400 });
   if (!address) return NextResponse.json({ error: "Missing wallet address." }, { status: 400 });
 
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
     // user already paid for on-chain. Skipped cleanly until Convex is provisioned.
     if (dbConfigured()) {
       try {
-        await recordCredential(saltedNullifierHash(nullifier).toString(), name);
+        await recordCredential(saltedNullifierHash(nullifier).toString(), name, privyUserId);
       } catch (dbErr) {
         console.warn("[ens/claim] credential DB record skipped:", dbErr);
       }

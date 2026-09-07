@@ -13,7 +13,16 @@ const PARENT = "humanproof.eth";
  * so the flow reads: verify human -> add passkey -> claim your name. The server route
  * re-checks the World-verification cookie before issuing — the app-level gate.
  */
-export function NameStep({ unlocked, address }: { unlocked: boolean; address?: string }) {
+export function NameStep({
+  unlocked,
+  address,
+  privyUserId,
+}: {
+  unlocked: boolean;
+  address?: string;
+  /** The owning Privy account (DID). Recorded with the credential so a passkey re-login can find it. */
+  privyUserId?: string;
+}) {
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
   const [claimed, setClaimed] = useState<{ name: string; resolved: string | null } | null>(null);
@@ -26,7 +35,7 @@ export function NameStep({ unlocked, address }: { unlocked: boolean; address?: s
       const res = await fetch("/api/ens/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label, address }),
+        body: JSON.stringify({ label, address, privyUserId }),
       });
       const data = await res.json();
       if (!res.ok) {

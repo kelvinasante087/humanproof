@@ -112,7 +112,7 @@ function AuthPanel() {
 
         <PasskeyStep unlocked={verified} />
 
-        <NameStep unlocked={verified && hasPasskey} address={walletAddress} />
+        <NameStep unlocked={verified && hasPasskey} address={walletAddress} privyUserId={user?.id} />
 
         <Button variant="outline" onClick={() => logout()}>
           Sign out
