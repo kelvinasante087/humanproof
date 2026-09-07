@@ -59,6 +59,12 @@ In progress. Building at ETHOnline 2026 (September 4 to 16).
 
 All application code and smart contracts in this repository were written from scratch during ETHOnline 2026 (September 4 to 16). Sealing is **native**: an attestation contract (`HumanProofAttestations`) we wrote and deployed ourselves on Base Sepolia anchors every proof — it is **not** an external or pre-existing service. (An earlier plan considered calling a separate hosted sealing engine; on inspection it required live device-sensor forensics and couldn't seal a lightweight action attestation, so we built the native contract instead. It remains a possible production backend — noted here as related work, not a dependency.) The plans and specifications that preceded each build are committed in `docs/` as the build record.
 
+## AI attribution
+
+- **Code** — built with **Claude Code** (Anthropic), working in plan mode. The plan/spec written before each build is committed in [`docs/`](docs/) as the record.
+- **Brand & screens** — designed with **Google Stitch** and **Claude**, then finished in **Figma**.
+- **Direction** — every step was directed, edited, and verified by me (Kelvin). AI is the tool; the decisions, the integration, and the review are mine.
+
 ## Design
 
 The brand and every screen were designed from scratch during ETHOnline 2026, from a locked direction — a deep-navy credential card, a teal verification mark, and a single indigo action — and finished in Figma. Design assets live in `/design`.
