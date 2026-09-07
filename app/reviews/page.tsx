@@ -83,7 +83,7 @@ function ItemCard({ id, name, blurb }: { id: string; name: string; blurb: string
             <p className="text-muted-foreground text-sm">No reviews yet. Be the first verified human.</p>
           )}
           {seeds.map((r, i) => (
-            <ReviewRow key={`seed-${i}`} review={r} />
+            <ReviewRow key={`seed-${i}`} review={r} sample />
           ))}
           {posted.map((r, i) => (
             <ReviewRow key={`posted-${i}`} review={r} sealId={r.sealId} />
@@ -101,11 +101,26 @@ function ItemCard({ id, name, blurb }: { id: string; name: string; blurb: string
   );
 }
 
-function ReviewRow({ review, sealId }: { review: SeedReview; sealId?: string }) {
+function ReviewRow({
+  review,
+  sealId,
+  sample,
+}: {
+  review: SeedReview;
+  sealId?: string;
+  sample?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-1 border-t pt-3 first:border-t-0 first:pt-0">
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-xs">{review.author}</span>
+        <span className="flex items-center gap-2">
+          <span className="font-mono text-xs">{review.author}</span>
+          {sample && (
+            <span className="rounded-full border border-white/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/50">
+              Sample
+            </span>
+          )}
+        </span>
         <VerifiedBadge sealId={sealId} />
       </div>
       <Stars n={review.stars} />
