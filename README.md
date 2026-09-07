@@ -10,7 +10,7 @@ Built for [ETHOnline 2026](https://ethglobal.com/events/ethonline2026).
 
 The internet is drowning in bots, fake accounts, and AI-generated everything. HumanProof is a drop-in layer any app can plug into to guarantee an action was taken by a real, unique human, and to prove it later, without ever exposing who they are.
 
-- **Verify once.** A user proves they are a real, unique human with World ID Selfie Check, binds a device passkey, and gets a reusable credential (a pairwise DID and a username).
+- **Verify once.** A user proves they are a real, unique human with World ID Selfie Check, binds a device passkey, and gets a reusable, device-bound credential with an ENS username.
 - **Attest anything.** Any app calls one endpoint to attest that a verified human performed an action. The attestation is sealed onchain: a salted fingerprint of the human, a content hash of the action, the calling app's id, and a timestamp — never identity, never the content.
 - **Verify by anyone.** A public page confirms that a verified unique human did this, at this time, with no identity and no raw content revealed.
 
