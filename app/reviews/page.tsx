@@ -2,8 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ArrowBigDown,
+  ArrowBigUp,
+  BadgeCheck,
+  Bell,
+  MessageCircle,
+  Search,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { HumanSessionBanner, useHumanSession } from "@/components/human-session";
 import { useHumanProofSignIn } from "@/components/humanproof-signin";
 import { useAuthedFetch } from "@/components/use-authed-fetch";
@@ -15,94 +23,186 @@ import {
   type SeedReview,
 } from "@/lib/demo/reviews";
 
-/** A review that was just posted live — carries the real seal reference for its verify link. */
 type PostedReview = SeedReview & { sealId: string };
 
 function Stars({ n }: { n: number }) {
   return (
-    <span className="text-amber-500" aria-label={`${n} out of 5 stars`}>
+    <span className="tracking-[0.08em] text-amber-300" aria-label={`${n} out of 5 stars`}>
       {"★".repeat(n)}
-      <span className="text-slate-300">{"★".repeat(5 - n)}</span>
+      <span className="opacity-25">{"★".repeat(5 - n)}</span>
     </span>
   );
 }
 
 function VerifiedBadge({ sealId }: { sealId?: string }) {
   const badge = (
-    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-xs font-medium text-white">
-      ✓ Verified human
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]">
+      <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+      Verified human
     </span>
   );
-  // A live-posted review links its badge to the public verify page (the money shot). Seed reviews
-  // show the badge styling only.
-  return sealId ? (
-    <Link href={`/verify/${sealId}`} className="hover:underline">
-      {badge}
-    </Link>
-  ) : (
-    badge
-  );
+  return sealId ? <Link href={`/verify/${sealId}`}>{badge}</Link> : badge;
 }
 
 export default function ReviewsPage() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Reviews</h1>
-        <p className="text-muted-foreground text-sm">
-          A demo app riding on the HumanProof layer. Anyone can read — but only a verified human
-          can post, so the fake-review farms can&apos;t get in. This is the layer used for{" "}
-          <span className="font-medium">abuse prevention</span>.
-        </p>
+    <main className="min-h-screen bg-[#08090b] text-white">
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#08090b]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-5 px-4 sm:px-6">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-[#ff6a33]">
+              <MessageCircle className="h-5 w-5 fill-current" aria-hidden="true" />
+            </span>
+            <span className="font-heading text-xl">Proofit</span>
+          </Link>
+          <div className="relative hidden max-w-xl flex-1 sm:block">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-45" />
+            <div className="rounded-full border border-white/10 bg-white/[0.05] py-2.5 pl-11 pr-4 text-sm opacity-55">
+              Search verified conversations
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            <Bell className="h-5 w-5 opacity-65" aria-hidden="true" />
+            <Link href="/account" className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold">
+              HumanProof
+            </Link>
+          </div>
+        </div>
       </header>
 
-      <HumanSessionBanner appLabel="Reviews" />
+      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[190px_minmax(0,680px)_260px]">
+        <aside className="hidden lg:block">
+          <nav className="sticky top-20 space-y-1 text-sm">
+            <Link href="/reviews" className="flex items-center gap-3 rounded-lg bg-white/[0.08] px-3 py-2.5 font-semibold">
+              <MessageCircle className="h-4 w-4" /> Popular
+            </Link>
+            <div className="px-3 pb-2 pt-6 text-[10px] font-semibold uppercase tracking-[0.16em] opacity-40">
+              Communities
+            </div>
+            {["h/producttalk", "h/ghana", "h/tech"].map((community) => (
+              <div key={community} className="flex items-center gap-3 rounded-lg px-3 py-2.5 opacity-65">
+                <span className="h-5 w-5 rounded-full border border-white/20 bg-white/[0.06]" />
+                {community}
+              </div>
+            ))}
+          </nav>
+        </aside>
 
-      <div className="flex flex-col gap-5">
-        {REVIEW_ITEMS.map((item) => (
-          <ItemCard key={item.id} id={item.id} name={item.name} blurb={item.blurb} />
-        ))}
+        <section className="min-w-0 space-y-4">
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-[#111318]">
+            <div className="border-b border-white/10 px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-45">h/verifiedreviews</p>
+              <h1 className="mt-1 font-heading text-3xl">Real opinions from real people.</h1>
+            </div>
+            <div className="p-3">
+              <HumanSessionBanner appLabel="Proofit" />
+            </div>
+          </div>
+
+          {REVIEW_ITEMS.map((item, index) => (
+            <ItemThread
+              key={item.id}
+              id={item.id}
+              name={item.name}
+              blurb={item.blurb}
+              score={184 - index * 47}
+            />
+          ))}
+        </section>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-20 overflow-hidden rounded-xl border border-white/10 bg-[#111318]">
+            <div className="bg-gradient-to-r from-[#ff6a33] to-[#d74620] px-4 py-5">
+              <p className="font-heading text-xl">About this community</p>
+            </div>
+            <div className="space-y-4 p-4 text-sm">
+              <p className="leading-relaxed opacity-70">
+                Product conversations where every post comes from one unique, verified human.
+              </p>
+              <div className="flex items-center gap-3 border-y border-white/10 py-3">
+                <Users className="h-4 w-4" />
+                <div>
+                  <p className="font-semibold">12.4k humans</p>
+                  <p className="text-xs opacity-45">No bot accounts</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 text-xs leading-relaxed opacity-60">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                Read freely. Posting requires a reusable HumanProof credential.
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
     </main>
   );
 }
 
-function ItemCard({ id, name, blurb }: { id: string; name: string; blurb: string }) {
+function ItemThread({
+  id,
+  name,
+  blurb,
+  score,
+}: {
+  id: string;
+  name: string;
+  blurb: string;
+  score: number;
+}) {
   const { verified, name: humanName } = useHumanSession();
   const seeds = SEED_REVIEWS[id] ?? [];
   const [posted, setPosted] = useState<PostedReview[]>([]);
+  const commentCount = seeds.length + posted.length;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">{name}</CardTitle>
-        <p className="text-muted-foreground text-sm">{blurb}</p>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3">
-          {seeds.length === 0 && posted.length === 0 && (
-            <p className="text-muted-foreground text-sm">No reviews yet. Be the first verified human.</p>
-          )}
-          {seeds.map((r, i) => (
-            <ReviewRow key={`seed-${i}`} review={r} sample />
+    <article className="grid grid-cols-[44px_1fr] overflow-hidden rounded-xl border border-white/10 bg-[#111318] transition hover:border-white/20">
+      <div className="flex flex-col items-center gap-1 bg-black/20 py-4">
+        <button type="button" aria-label="Upvote" className="opacity-55 transition hover:opacity-100">
+          <ArrowBigUp className="h-5 w-5" />
+        </button>
+        <span className="text-xs font-bold tabular-nums">{score}</span>
+        <button type="button" aria-label="Downvote" className="opacity-35 transition hover:opacity-100">
+          <ArrowBigDown className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="min-w-0 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] opacity-45">
+          <span className="font-semibold">h/producttalk</span>
+          <span>•</span>
+          <span>posted by a verified human</span>
+        </div>
+        <h2 className="mt-2 font-heading text-2xl">{name}</h2>
+        <p className="mt-1 text-sm opacity-65">{blurb}</p>
+
+        <div className="mt-5 space-y-4 border-l border-white/10 pl-4">
+          {commentCount === 0 && <p className="text-sm opacity-45">No comments yet.</p>}
+          {seeds.map((review, index) => (
+            <ReviewComment key={`seed-${index}`} review={review} sample />
           ))}
-          {posted.map((r, i) => (
-            <ReviewRow key={`posted-${i}`} review={r} sealId={r.sealId} />
+          {posted.map((review) => (
+            <ReviewComment key={review.sealId} review={review} sealId={review.sealId} />
           ))}
         </div>
 
-        <ReviewForm
-          itemId={id}
-          verified={verified}
-          authorName={humanName}
-          onPosted={(r) => setPosted((prev) => [...prev, r])}
-        />
-      </CardContent>
-    </Card>
+        <details className="group mt-5 border-t border-white/10 pt-4">
+          <summary className="inline-flex cursor-pointer list-none items-center gap-2 text-xs font-semibold opacity-70 marker:hidden [&::-webkit-details-marker]:hidden">
+            <MessageCircle className="h-4 w-4" />
+            {commentCount} {commentCount === 1 ? "comment" : "comments"} · Join the discussion
+          </summary>
+          <ReviewForm
+            itemId={id}
+            verified={verified}
+            authorName={humanName}
+            onPosted={(review) => setPosted((current) => [...current, review])}
+          />
+        </details>
+      </div>
+    </article>
   );
 }
 
-function ReviewRow({
+function ReviewComment({
   review,
   sealId,
   sample,
@@ -112,20 +212,19 @@ function ReviewRow({
   sample?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1 border-t pt-3 first:border-t-0 first:pt-0">
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2">
-          <span className="font-mono text-xs">{review.author}</span>
-          {sample && (
-            <span className="rounded-full border border-white/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/50">
-              Sample
-            </span>
-          )}
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-cyan-400/40 to-violet-500/40 text-[10px] font-bold">
+          {review.author.slice(0, 2).toUpperCase()}
         </span>
+        <span className="font-mono text-xs font-semibold">{review.author}</span>
+        {sample && <span className="text-[9px] uppercase tracking-[0.12em] opacity-35">Sample</span>}
         <VerifiedBadge sealId={sealId} />
       </div>
-      <Stars n={review.stars} />
-      <p className="text-sm">{review.body}</p>
+      <div className="ml-9 mt-2">
+        <Stars n={review.stars} />
+        <p className="mt-1 text-sm leading-relaxed opacity-80">{review.body}</p>
+      </div>
     </div>
   );
 }
@@ -139,23 +238,20 @@ function ReviewForm({
   itemId: string;
   verified: boolean;
   authorName: string | null;
-  onPosted: (r: PostedReview) => void;
+  onPosted: (review: PostedReview) => void;
 }) {
   const [stars, setStars] = useState(5);
   const [body, setBody] = useState("");
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // The passkey sign-in is raised HERE, at the Post moment — the open-door pattern. Anyone can
-  // type and read; only sealing the review needs a verified human.
   const { signIn, busy: signingIn, status: signInStatus, error: signInError, passkeyState } =
     useHumanProofSignIn();
-  // Sealing is bound to the calling account server-side, so the request must prove who it is.
   const authedFetch = useAuthedFetch();
 
   async function doPost(author: string) {
     setPosting(true);
     try {
-      const res = await authedFetch("/api/attest", {
+      const response = await authedFetch("/api/attest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -163,17 +259,16 @@ function ReviewForm({
           contentHash: reviewContentHash(itemId, body),
         }),
       });
-      const data = await res.json();
-      if (res.ok) {
+      const data = await response.json();
+      if (response.ok) {
         onPosted({ author, stars, body, sealId: data.sealId });
         setBody("");
         setStars(5);
         return;
       }
-      if (res.status === 401) setError("Only a verified human can post. Tap “Sign in with HumanProof”.");
-      else if (res.status === 409) setError("You've already reviewed this item as this human.");
-      else if (res.status === 503) setError("Sealing is being provisioned — try once the layer is live.");
-      else setError(data.error || "Couldn't post that review.");
+      if (response.status === 401) setError("Only a verified human can post.");
+      else if (response.status === 409) setError("You already reviewed this item as this human.");
+      else setError(data.error || "Could not post that review.");
     } catch {
       setError("Network error — please try again.");
     } finally {
@@ -183,71 +278,68 @@ function ReviewForm({
 
   async function submit() {
     setError(null);
-    // Verified already (from onboarding or the other app) → seal straight away.
     if (verified) {
-      await doPost(authorName ?? "you — verified human");
+      await doPost(authorName ?? "verified-human");
       return;
     }
-    // Not verified: one passkey tap re-establishes the verified session, then the SAME post seals.
-    const r = await signIn();
-    if (!r.ok) return; // needsOnboarding / cancelled / error surfaced below
-    await doPost(r.name ?? authorName ?? "you — verified human");
+    const result = await signIn();
+    if (result.ok) await doPost(result.name ?? authorName ?? "verified-human");
   }
 
   const busy = posting || signingIn;
 
   return (
-    <div className="flex flex-col gap-2 border-t pt-4">
-      <span className="text-sm font-medium">Write a review</span>
-      <div className="flex items-center gap-1 text-lg">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => setStars(n)}
-            className={n <= stars ? "text-amber-500" : "text-slate-300"}
-            aria-label={`${n} stars`}
-          >
-            ★
-          </button>
-        ))}
+    <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="text-xs font-semibold">Your rating</span>
+        <div className="flex gap-1 text-lg">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setStars(value)}
+              className={value <= stars ? "opacity-100" : "opacity-20"}
+              aria-label={`${value} stars`}
+            >
+              ★
+            </button>
+          ))}
+        </div>
       </div>
       <textarea
         value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder="Say something real…"
-        rows={2}
-        className="border-input focus-visible:ring-ring w-full rounded-md border bg-transparent px-3 py-2 text-sm focus-visible:ring-1 focus-visible:outline-none"
+        onChange={(event) => setBody(event.target.value)}
+        placeholder="What do you really think?"
+        rows={3}
+        className="w-full resize-none rounded-lg border border-white/10 bg-[#090a0d] px-4 py-3 text-sm outline-none transition focus:border-white/30"
       />
-      <Button onClick={submit} disabled={busy || !body.trim()}>
-        {posting
-          ? "Posting…"
-          : signingIn
-            ? passkeyState === "awaiting-passkey"
-              ? "Waiting for passkey…"
-              : "Signing in…"
-            : verified
-              ? "Post review"
-              : "Sign in with HumanProof to post"}
-      </Button>
-      {!verified && signInStatus !== "onboarding" && (
-        <p className="text-muted-foreground text-xs">
-          Anyone can read and type — posting seals the review to a real human. One passkey tap signs
-          you in; no new verification.
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs opacity-45">
+          {verified ? "Your HumanProof seal will be attached." : "Sign in once to post as a real human."}
         </p>
-      )}
+        <button
+          type="button"
+          onClick={submit}
+          disabled={busy || !body.trim()}
+          className="rounded-full bg-[#ff6a33] px-5 py-2.5 text-xs font-bold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          {posting
+            ? "Posting…"
+            : signingIn
+              ? passkeyState === "awaiting-passkey"
+                ? "Waiting for passkey…"
+                : "Signing in…"
+              : verified
+                ? "Post comment"
+                : "Sign in to post"}
+        </button>
+      </div>
       {signInStatus === "onboarding" && (
-        <p className="text-muted-foreground text-xs">
-          You don&apos;t have a HumanProof credential yet.{" "}
-          <Link href="/" className="underline underline-offset-2">
-            Create one
-          </Link>{" "}
-          — it takes a minute, then you can post.
+        <p className="mt-3 text-xs opacity-65">
+          You need a HumanProof credential. <Link href="/" className="underline">Create one</Link>.
         </p>
       )}
-      {(error || signInError) && (
-        <p className="text-destructive text-sm">{error || signInError}</p>
-      )}
+      {(error || signInError) && <p className="mt-3 text-sm text-rose-300">{error || signInError}</p>}
     </div>
   );
 }
