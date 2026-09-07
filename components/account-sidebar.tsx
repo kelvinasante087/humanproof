@@ -91,7 +91,7 @@ export function AccountSidebar() {
     !searchQuery || item.label.toLowerCase().includes(searchQuery.toLowerCase());
 
   const sidebarContent = (
-    <div className="flex h-full flex-col justify-between overflow-y-auto overscroll-contain bg-black p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white select-none">
+    <div className="flex h-full flex-col justify-between overflow-y-auto overscroll-contain bg-black p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white select-none lg:overflow-hidden">
       {/* Top Header & Navigation */}
       <div className="flex flex-col">
         {/* Brand Logo Lockup */}
@@ -318,7 +318,7 @@ export function AccountSidebar() {
       )}
 
       {/* Desktop Fixed Sidebar */}
-      <aside className="hidden lg:flex w-64 xl:w-72 h-screen sticky top-0 bg-black border-r border-white/10 flex-col shrink-0 select-none z-30">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden h-screen w-64 shrink-0 flex-col border-r border-white/10 bg-black select-none lg:flex xl:w-72">
         {sidebarContent}
       </aside>
     </>

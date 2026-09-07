@@ -8,9 +8,9 @@ export default function AccountLayout({
 }) {
   return (
     <AvatarProvider>
-      <div className="min-h-screen w-full bg-black flex flex-col lg:flex-row text-white">
+      <div className="min-h-screen w-full bg-black text-white lg:h-screen lg:overflow-hidden">
         <AccountSidebar />
-        <div className="flex-1 min-w-0 bg-black">
+        <div className="min-w-0 bg-black lg:ml-64 lg:h-screen lg:overflow-y-auto xl:ml-72">
           {children}
         </div>
       </div>
