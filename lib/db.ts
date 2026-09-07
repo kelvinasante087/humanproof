@@ -41,6 +41,12 @@ const getCredentialByPrivyUserRef = makeFunctionReference<
   { nullifierHash: string; name: string } | null
 >("credentials:getByPrivyUser");
 
+const linkCredentialAccountRef = makeFunctionReference<
+  "mutation",
+  { nullifierHash: string; name: string; privyUserId: string },
+  { linked: boolean }
+>("credentials:linkAccount");
+
 const reserveSealRef = makeFunctionReference<
   "mutation",
   { dedupeKey: string; nullifierHash: string; appId: string; contentHash: string },
@@ -160,4 +166,17 @@ export async function getCredentialByPrivyUser(
   privyUserId: string,
 ): Promise<{ nullifierHash: string; name: string } | null> {
   return await client().query(getCredentialByPrivyUserRef, { privyUserId });
+}
+
+/**
+ * Idempotent recovery: link a Privy account to its credential (patching an existing row or
+ * inserting one), so a human who already claimed on-chain still becomes remembered. Best-effort;
+ * only the salted hash is stored.
+ */
+export async function linkCredentialAccount(
+  nullifierHash: string,
+  name: string,
+  privyUserId: string,
+): Promise<void> {
+  await client().mutation(linkCredentialAccountRef, { nullifierHash, name, privyUserId });
 }

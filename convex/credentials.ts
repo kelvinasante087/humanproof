@@ -21,6 +21,33 @@ export const record = mutation({
 });
 
 /**
+ * Link a Privy account to an existing (or new) credential — the idempotent recovery path.
+ *
+ * A human who already claimed their name on-chain can't claim again (the registrar reverts
+ * NullifierAlreadyUsed), so the normal record-on-successful-claim never fires for them. That left
+ * returning humans with NO db row to be remembered by. This repairs that: keyed on the salted
+ * fingerprint, it patches the owning Privy account onto the existing row (or inserts one if the
+ * row was never written), so "Sign in with HumanProof" can find them next time. Safe to call more
+ * than once. The raw nullifier is never involved — only its salted hash.
+ */
+export const linkAccount = mutation({
+  args: { nullifierHash: v.string(), name: v.string(), privyUserId: v.string() },
+  handler: async (ctx, { nullifierHash, name, privyUserId }) => {
+    const existing = await ctx.db
+      .query("credentials")
+      .withIndex("by_nullifier", (q) => q.eq("nullifierHash", nullifierHash))
+      .unique();
+    if (existing) {
+      // Keep the name already on record if there is one; only fill it in when it was missing.
+      await ctx.db.patch(existing._id, { privyUserId, name: existing.name || name });
+      return { linked: true };
+    }
+    await ctx.db.insert("credentials", { nullifierHash, name, privyUserId, createdAt: Date.now() });
+    return { linked: true };
+  },
+});
+
+/**
  * Look up a credential by the Privy account (DID) that owns it. Powers "Sign in with HumanProof":
  * after a returning human's passkey login is verified server-side, we find their existing
  * credential here and re-issue the verified session — no repeat World check. Returns the salted

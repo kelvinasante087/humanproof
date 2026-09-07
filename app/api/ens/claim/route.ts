@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
 import { readSession } from "@/lib/session";
 import { claimViaRegistrar, resolveName, saltedNullifierHash, AlreadyClaimedError, NameUnavailableError } from "@/lib/ens/registrar";
-import { InvalidEnsNameError } from "@/lib/ens/normalize";
-import { recordCredential, dbConfigured } from "@/lib/db";
+import { InvalidEnsNameError, normalizeSubname } from "@/lib/ens/normalize";
+import { PARENT_NAME } from "@/lib/ens/config";
+import { recordCredential, linkCredentialAccount, dbConfigured } from "@/lib/db";
 
 /**
  * Claim <name>.humanproof.eth for the signed-in user — THROUGH the on-chain registrar.
@@ -68,7 +69,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ name, resolved, txHash });
   } catch (err) {
     if (err instanceof InvalidEnsNameError) return NextResponse.json({ error: err.message }, { status: 400 });
-    if (err instanceof AlreadyClaimedError) return NextResponse.json({ error: err.message }, { status: 409 });
+
+    // "Already claimed" is keyed on the HUMAN (the registrar reverts NullifierAlreadyUsed), so this
+    // session's World fingerprint IS this human's real, already-registered one. That's not a dead
+    // end — it's a returning human. Repair their credential record (link this Privy account to their
+    // real fingerprint + name) so "Sign in with HumanProof" remembers them from now on, and treat
+    // it as a successful re-sync rather than an error. No re-claim, no new nullifier — their real
+    // one is reused; only its salted hash is ever stored.
+    if (err instanceof AlreadyClaimedError) {
+      if (dbConfigured() && privyUserId) {
+        try {
+          const { name } = normalizeSubname(label, PARENT_NAME);
+          // Confirm this is a name they actually own before recording it. If it resolves to a
+          // DIFFERENT wallet, they typed someone else's name — ask for the right one. If it can't
+          // be resolved (known ENSv2 resolver flakiness), trust the nullifier (it already proves
+          // this human) and record best-effort.
+          const resolved = await resolveName(name).catch(() => null);
+          if (resolved && resolved.toLowerCase() !== address.toLowerCase()) {
+            return NextResponse.json(
+              { error: "You've already claimed a name. Enter the exact name you claimed to sign back in." },
+              { status: 409 },
+            );
+          }
+          await linkCredentialAccount(saltedNullifierHash(nullifier).toString(), name, privyUserId);
+          return NextResponse.json({ name, resolved, resynced: true });
+        } catch (linkErr) {
+          console.warn("[ens/claim] re-sync link failed:", linkErr);
+        }
+      }
+      // Couldn't re-sync (no store or no account id) — fall back to the honest "already claimed".
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
+
     if (err instanceof NameUnavailableError) return NextResponse.json({ error: err.message }, { status: 409 });
     console.error("[ens/claim] on-chain claim failed:", err);
     return NextResponse.json({ error: "Couldn't claim that name right now." }, { status: 500 });
