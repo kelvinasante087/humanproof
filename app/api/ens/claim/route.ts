@@ -24,7 +24,16 @@ export async function POST(request: Request) {
   if (!session) {
     return NextResponse.json({ error: "Verify you're human first." }, { status: 401 });
   }
+  // Claiming a name needs the RAW nullifier (to build the on-chain humanity voucher). A passkey
+  // re-login session carries only the salted hash — such a human already holds a credential and
+  // never re-claims, so reject cleanly rather than pretend we can build a voucher.
   const nullifier = session.nullifier;
+  if (!nullifier) {
+    return NextResponse.json(
+      { error: "This session can't claim a name. You already have a credential." },
+      { status: 401 },
+    );
+  }
 
   let body: { label?: unknown; address?: unknown };
   try {

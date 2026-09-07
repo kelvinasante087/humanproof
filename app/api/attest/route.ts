@@ -59,7 +59,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const nullifierHash = saltedNullifierHash(session.nullifier); // bigint — the salted fingerprint
+  // The salted fingerprint (bigint). An onboarding session carries the raw nullifier (hash it here);
+  // a passkey re-login session carries the already-salted hash directly. Either way, same value.
+  const nullifierHash = session.nullifierHash
+    ? BigInt(session.nullifierHash)
+    : saltedNullifierHash(session.nullifier!);
   const contentHash32 = toContentHash32(contentHash);
   const dedupeKey = attestDedupeKey(nullifierHash, contentHash32, appId);
 

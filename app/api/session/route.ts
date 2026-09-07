@@ -29,7 +29,10 @@ export async function GET() {
   let name: string | null = null;
   if (dbConfigured()) {
     try {
-      name = await getCredentialName(saltedNullifierHash(session.nullifier).toString());
+      // Onboarding sessions carry the raw nullifier (hash it); passkey re-login sessions already
+      // carry the salted hash. The name lookup is keyed on that hash in both cases.
+      const nullifierHash = session.nullifierHash ?? saltedNullifierHash(session.nullifier!).toString();
+      name = await getCredentialName(nullifierHash);
     } catch {
       name = null;
     }
