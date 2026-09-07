@@ -246,15 +246,7 @@ body :where(a, button)[class~="bg-white"] {
 }
 
 .credential-provider-glyph-active {
-  filter:
-    brightness(0)
-    saturate(100%)
-    invert(88%)
-    sepia(58%)
-    saturate(935%)
-    hue-rotate(344deg)
-    brightness(104%)
-    contrast(102%);
+  filter: none;
 }
 
 .credential-provider-node-inactive {
