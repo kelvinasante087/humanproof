@@ -29,7 +29,7 @@ export type SignInResult =
 
 export type SignInStatus = "idle" | "signing" | "onboarding" | "error";
 
-export function useHumanProofSignIn() {
+export function useHumanProofSignIn(requirePasskey = false) {
   const { authenticated, getAccessToken } = usePrivy();
   const { loginWithPasskey, state } = useLoginWithPasskey();
   const { refresh } = useHumanSession();
@@ -40,9 +40,9 @@ export function useHumanProofSignIn() {
     setError(null);
     setStatus("signing");
     try {
-      // 1. The passkey tap (returning-user login). If Privy is already authenticated, the passkey
-      // prompt would conflict — reuse the existing session's token in that case instead.
-      if (!authenticated) {
+      // Demo entry explicitly invokes the returning-user passkey flow even when the shared
+      // credential site is authenticated. Other callers can reuse their existing session.
+      if (requirePasskey || !authenticated) {
         await loginWithPasskey();
       }
 
@@ -87,7 +87,7 @@ export function useHumanProofSignIn() {
       setError(err instanceof Error ? err.message : "Passkey sign-in was cancelled.");
       return { ok: false };
     }
-  }, [authenticated, loginWithPasskey, getAccessToken, refresh]);
+  }, [authenticated, requirePasskey, loginWithPasskey, getAccessToken, refresh]);
 
   const busy =
     status === "signing" ||

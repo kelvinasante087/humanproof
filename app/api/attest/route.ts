@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readBoundSession } from "@/lib/account-session";
+import { hasDemoSession, isDemoApp } from "@/lib/demo/session";
 import { saltedNullifierHash } from "@/lib/ens/registrar";
 import {
   sealAction,
@@ -51,6 +52,9 @@ export async function POST(request: Request) {
   const appId = typeof body.appId === "string" ? body.appId.trim() : "";
   if (!contentHash) return NextResponse.json({ error: "Missing contentHash." }, { status: 400 });
   if (!appId) return NextResponse.json({ error: "Missing appId." }, { status: 400 });
+  if (isDemoApp(appId) && !await hasDemoSession(appId, bound.privyUserId)) {
+    return NextResponse.json({ error: "Sign in to this app with HumanProof." }, { status: 401 });
+  }
 
   if (!sealConfigured()) {
     return NextResponse.json(

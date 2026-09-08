@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import styles from "./airdrop.module.css";
+import { DemoAccess } from "@/components/demo-access";
 import Link from "next/link";
 import { usePrivy, useSendTransaction } from "@privy-io/react-auth";
 import {
@@ -32,6 +33,10 @@ import {
 type Status = "idle" | "claiming" | "done" | "blocked" | "error";
 
 export default function AirdropPage() {
+  return <DemoAccess app="airdrop"><AirdropDashboard /></DemoAccess>;
+}
+
+function AirdropDashboard() {
   return (
     <main className={styles.app}>
 

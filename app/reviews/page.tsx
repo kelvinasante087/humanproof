@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styles from "./reviews.module.css";
+import { DemoAccess } from "@/components/demo-access";
 import Link from "next/link";
 import {
   ArrowBigDown,
@@ -45,6 +46,10 @@ function VerifiedBadge({ sealId }: { sealId?: string }) {
 }
 
 export default function ReviewsPage() {
+  return <DemoAccess app="reviews"><ReviewsFeed /></DemoAccess>;
+}
+
+function ReviewsFeed() {
   const [query, setQuery] = useState("");
   return (
     <main className={styles.app}>
