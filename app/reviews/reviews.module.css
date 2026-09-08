@@ -1,0 +1,39 @@
+.app {
+  min-height: 100dvh;
+  background: #dae0e6;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1c1c1c;
+}
+.app :where(div, h1, h2, h3, p, span, a, button, input, textarea, summary) {
+  color: #1c1c1c !important;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.app h1 { font-size: 28px; font-weight: 750; letter-spacing: -.7px; }
+.app h2 { font-size: 20px; font-weight: 650; letter-spacing: -.3px; }
+.app > header { background: #fff; border-color: #edeff1; backdrop-filter: none; }
+.app article,
+.app section > div,
+.app aside > div { background: #fff; border-color: #ccc; border-radius: 5px; }
+.app :where(div, article, details, textarea, a, span) { border-color: #e2e5e8; }
+.app article > div:first-child { background: #f8f9fa; }
+.app article:hover { border-color: #898989; }
+.app aside nav > a { background: #fff; border-radius: 5px; }
+.app aside > div > div:first-child { background: #ff4500; }
+.app aside > div > div:first-child p { color: #fff !important; font-size: 16px; }
+.app textarea { background: #fff; }
+.app details > div { background: #f8f9fa; }
+.app button[aria-pressed="true"] { color: #ff4500 !important; opacity: 1; }
+.app button:focus-visible, .app summary:focus-visible, .app a:focus-visible { outline: 2px solid #0079d3; outline-offset: 3px; }
+.app button[class*="bg-[#ff6a33]"] { background: #ff4500; color: #fff !important; }
+.app span[class*="bg-cyan"] { background: #edf7ff; color: #0079d3 !important; border-color: #c5e3fa; }
+.brand { display: flex; align-items: center; gap: 8px; font-size: 28px; font-weight: 750; letter-spacing: -1px; }
+.brand > span:first-child { background: #ff4500; color: #fff !important; }
+.brand > span:last-child { color: #ff4500 !important; }
+.search { width: 100%; border-radius: 24px; padding: 11px 16px 11px 42px; background: #f6f7f8; border: 1px solid #edeff1; font-size: 14px; outline: none; }
+.search:focus { border-color: #0079d3; background: #fff; }
+.app input::placeholder, .app textarea::placeholder { color: #787c7e !important; }
+@media (max-width: 640px) {
+  .app h1 { font-size: 24px; }
+  .app h2 { font-size: 18px; }
+  .brand { font-size: 23px; }
+}

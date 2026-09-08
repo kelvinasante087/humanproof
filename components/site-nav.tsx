@@ -115,7 +115,7 @@ export function SiteNav() {
     };
   }, [mobileOpen]);
 
-  if (pathname?.startsWith("/account")) {
+  if (pathname?.startsWith("/account") || pathname === "/reviews" || pathname === "/airdrop") {
     return null;
   }
 
@@ -204,4 +204,3 @@ export function SiteNav() {
     </header>
   );
 }
-

@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import styles from "./airdrop.module.css";
 import Link from "next/link";
 import { usePrivy, useSendTransaction } from "@privy-io/react-auth";
 import {
   ArrowUpRight,
   Check,
   Coins,
-  Copy,
   ExternalLink,
   ShieldCheck,
   Sparkles,
@@ -33,16 +33,11 @@ type Status = "idle" | "claiming" | "done" | "blocked" | "error";
 
 export default function AirdropPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050807] text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-40 top-20 h-[480px] w-[480px] rounded-full bg-emerald-500/10 blur-[120px]" />
-        <div className="absolute -right-40 top-0 h-[520px] w-[520px] rounded-full bg-blue-500/10 blur-[140px]" />
-        <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,.5)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.5)_1px,transparent_1px)] [background-size:56px_56px]" />
-      </div>
+    <main className={styles.app}>
 
       <header className="relative z-20 border-b border-white/10 bg-black/20 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/airdrop" className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-xl border border-emerald-300/30 bg-emerald-300/10 font-heading text-sm">
               P
             </span>
@@ -59,18 +54,22 @@ export default function AirdropPage() {
         </div>
       </header>
 
-      <div className="relative z-10 mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1fr_520px] lg:items-center lg:py-20">
-        <section>
+      <div className={styles.dashboard}>
+        <div className={styles.pageHeading}>
+          <p>CAMPAIGNS / COMMUNITY REWARDS</p>
+          <h1>Airdrop hub</h1>
+          <span>Discover your allocation. Claim directly to your wallet.</span>
+        </div>
+        <section className={styles.campaign}>
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em]">
             <Sparkles className="h-3.5 w-3.5" />
-            ETHGlobal community drop
+            Community campaign · Testnet demo
           </div>
-          <h1 className="mt-6 max-w-xl font-heading text-5xl leading-[0.95] tracking-[-0.04em] sm:text-7xl">
-            500 PROOF for every real human.
-          </h1>
+          <div className={styles.artwork} aria-hidden="true"><span>Ξ</span><div>BUILD.<br />PROVE.<br />CLAIM.</div></div>
+          <h2 className={styles.campaignTitle}>ETHGlobal community airdrop</h2>
           <p className="mt-6 max-w-lg text-base leading-relaxed opacity-60 sm:text-lg">
-            A sybil-resistant token distribution powered by HumanProof. One person gets one
-            allocation, even across multiple wallets.
+            Claim 500 PROOF with your HumanProof credential. One allocation per person.
+            This is a community demo on Base Sepolia.
           </p>
           <div className="mt-8 flex flex-wrap gap-6 text-sm">
             <div>
@@ -104,8 +103,7 @@ function CampaignCard({
   const shortAddress = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : null;
 
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-white/15 bg-[#0b1110] p-1 shadow-[0_32px_100px_rgba(0,0,0,.55)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-emerald-400/15 to-transparent" />
+    <section className={styles.claimCard}>
       <div className="relative rounded-[24px] border border-white/[0.06] bg-black/25 p-6 sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -138,7 +136,6 @@ function CampaignCard({
             </span>
             <span className="flex items-center gap-2 font-mono text-xs">
               {shortAddress}
-              <Copy className="h-3.5 w-3.5 opacity-35" />
             </span>
           </div>
         )}
@@ -299,7 +296,7 @@ function Claim() {
 
       <p className="mt-4 flex items-center justify-center gap-2 text-center text-[11px] opacity-40">
         <ShieldCheck className="h-3.5 w-3.5" />
-        The button stays available so repeat claims visibly fail.
+        One allocation per human. Repeat claims are blocked.
       </p>
     </CampaignCard>
   );

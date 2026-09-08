@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import styles from "./reviews.module.css";
 import Link from "next/link";
 import {
   ArrowBigDown,
   ArrowBigUp,
   BadgeCheck,
-  Bell,
   MessageCircle,
   Search,
   ShieldCheck,
@@ -45,26 +45,24 @@ function VerifiedBadge({ sealId }: { sealId?: string }) {
 }
 
 export default function ReviewsPage() {
+  const [query, setQuery] = useState("");
   return (
-    <main className="min-h-screen bg-[#08090b] text-white">
+    <main className={styles.app}>
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#08090b]/95 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-5 px-4 sm:px-6">
-          <Link href="/" className="flex shrink-0 items-center gap-2">
+          <Link href="/reviews" className={styles.brand}>
             <span className="grid h-9 w-9 place-items-center rounded-full bg-[#ff6a33]">
               <MessageCircle className="h-5 w-5 fill-current" aria-hidden="true" />
             </span>
-            <span className="font-heading text-xl">Proofit</span>
+            <span>proofit</span>
           </Link>
           <div className="relative hidden max-w-xl flex-1 sm:block">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-45" />
-            <div className="rounded-full border border-white/10 bg-white/[0.05] py-2.5 pl-11 pr-4 text-sm opacity-55">
-              Search verified conversations
-            </div>
+            <input aria-label="Search reviews" placeholder="Search reviews" value={query} onChange={(event) => setQuery(event.target.value)} className={styles.search} />
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <Bell className="h-5 w-5 opacity-65" aria-hidden="true" />
             <Link href="/account" className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold">
-              HumanProof
+              My account
             </Link>
           </div>
         </div>
@@ -92,20 +90,20 @@ export default function ReviewsPage() {
           <div className="overflow-hidden rounded-xl border border-white/10 bg-[#111318]">
             <div className="border-b border-white/10 px-5 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-45">h/verifiedreviews</p>
-              <h1 className="mt-1 font-heading text-3xl">Real opinions from real people.</h1>
+              <h1 className="mt-1 font-heading text-3xl">Reviews worth reading.</h1>
             </div>
             <div className="p-3">
               <HumanSessionBanner appLabel="Proofit" />
             </div>
           </div>
 
-          {REVIEW_ITEMS.map((item, index) => (
+          {REVIEW_ITEMS.filter((item) => (item.name + item.blurb).toLowerCase().includes(query.toLowerCase())).map((item) => (
             <ItemThread
               key={item.id}
               id={item.id}
               name={item.name}
               blurb={item.blurb}
-              score={184 - index * 47}
+              score={0}
             />
           ))}
         </section>
@@ -122,8 +120,8 @@ export default function ReviewsPage() {
               <div className="flex items-center gap-3 border-y border-white/10 py-3">
                 <Users className="h-4 w-4" />
                 <div>
-                  <p className="font-semibold">12.4k humans</p>
-                  <p className="text-xs opacity-45">No bot accounts</p>
+                  <p className="font-semibold">A community demo</p>
+                  <p className="text-xs opacity-45">Sample threads · real proof on new posts</p>
                 </div>
               </div>
               <div className="flex items-start gap-2 text-xs leading-relaxed opacity-60">
@@ -152,16 +150,17 @@ function ItemThread({
   const { verified, name: humanName } = useHumanSession();
   const seeds = SEED_REVIEWS[id] ?? [];
   const [posted, setPosted] = useState<PostedReview[]>([]);
+  const [vote, setVote] = useState(0);
   const commentCount = seeds.length + posted.length;
 
   return (
     <article className="grid grid-cols-[44px_1fr] overflow-hidden rounded-xl border border-white/10 bg-[#111318] transition hover:border-white/20">
       <div className="flex flex-col items-center gap-1 bg-black/20 py-4">
-        <button type="button" aria-label="Upvote" className="opacity-55 transition hover:opacity-100">
+        <button type="button" aria-label="Upvote" aria-pressed={vote === 1} onClick={() => setVote(vote === 1 ? 0 : 1)} className="opacity-55 transition hover:opacity-100">
           <ArrowBigUp className="h-5 w-5" />
         </button>
-        <span className="text-xs font-bold tabular-nums">{score}</span>
-        <button type="button" aria-label="Downvote" className="opacity-35 transition hover:opacity-100">
+        <span title="Local demo votes" className="text-xs font-bold tabular-nums">{score + vote}</span>
+        <button type="button" aria-label="Downvote" aria-pressed={vote === -1} onClick={() => setVote(vote === -1 ? 0 : -1)} className="opacity-35 transition hover:opacity-100">
           <ArrowBigDown className="h-5 w-5" />
         </button>
       </div>
@@ -170,7 +169,7 @@ function ItemThread({
         <div className="flex flex-wrap items-center gap-2 text-[11px] opacity-45">
           <span className="font-semibold">h/producttalk</span>
           <span>•</span>
-          <span>posted by a verified human</span>
+          <span>sample discussion</span>
         </div>
         <h2 className="mt-2 font-heading text-2xl">{name}</h2>
         <p className="mt-1 text-sm opacity-65">{blurb}</p>

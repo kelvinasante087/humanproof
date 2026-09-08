@@ -1,0 +1,39 @@
+.app { min-height: 100dvh; background: #101014; color: #f3f2f7; font-family: Arial, Helvetica, sans-serif; }
+.app :where(div, h1, h2, h3, p, span, a, button) { font-family: Arial, Helvetica, sans-serif; color: #eeedf5 !important; }
+.app > header { background: #18181f; backdrop-filter: none; }
+.app header a:first-child { font-size: 20px; font-weight: 750; letter-spacing: -.7px; }
+.app header a:first-child > span:first-child { border-radius: 9px; background: #a393ef; border: none; color: #19132f !important; }
+.dashboard { max-width: 1180px; margin: auto; padding: 42px 32px 72px; display: grid; grid-template-columns: minmax(0,1fr) 390px; gap: 32px; align-items: start; }
+.pageHeading { grid-column: 1 / -1; padding-bottom: 25px; border-bottom: 1px solid #2b2b34; }
+.pageHeading p { font-size: 10px; letter-spacing: 1.5px; color: #9d91cf !important; margin-bottom: 16px; }
+.pageHeading h1 { font-size: 34px; font-weight: 650; letter-spacing: -1px; margin-bottom: 8px; }
+.pageHeading > span { font-size: 14px; color: #9996a8 !important; }
+.campaign { min-width: 0; }
+.campaign > div:first-child { background: transparent; border-color: #37313f; border-radius: 5px; color: #bdb5d5 !important; }
+.artwork { margin-top: 20px; height: 230px; padding: 30px; background: #b5a4ef; color: #211339; display: flex; align-items: center; justify-content: space-between; overflow: hidden; border-radius: 12px; }
+.artwork > span { font-size: 180px; font-weight: 400; line-height: 1; color: #302048 !important; transform: rotate(-12deg); }
+.artwork > div { font-size: 37px; font-weight: 850; letter-spacing: -2px; line-height: 1.05; color: #302048 !important; }
+.campaignTitle { margin-top: 25px; font-size: 25px; letter-spacing: -.5px; font-weight: 650; }
+.campaign > p { font-size: 14px; margin-top: 12px; max-width: 500px; line-height: 1.7; }
+.campaign > div:last-child { border-top: 1px solid #2b2b34; padding-top: 22px; }
+.claimCard { background: #1b1b23; border: 1px solid #35343e; border-radius: 12px; overflow: hidden; }
+.claimCard > div { background: none; border: none; border-radius: 0; padding: 28px; }
+.claimCard [class*="bg-gradient"] { background: #a393ef; box-shadow: none; }
+.claimCard button[class*="bg-gradient"] { color: #171126 !important; border-radius: 8px; min-height: 50px; }
+.claimCard button[class*="bg-gradient"] svg { color: #171126; }
+.claimCard span[class*="bg-gradient"] { color: #171126 !important; border-radius: 10px; }
+.claimCard span[class*="text-6xl"] { font-size: 58px; font-weight: 550; letter-spacing: -3px; }
+.claimCard p[class*="font-heading"] { font-weight: 650; font-size: 16px; }
+.claimCard span[class*="bg-emerald"] { background: #293626; border-color: #3b5235; color: #c8e4b7 !important; }
+.app a:focus-visible, .app button:focus-visible { outline: 2px solid #b5a4ef; outline-offset: 4px; }
+@media (max-width: 900px) {
+  .dashboard { grid-template-columns: 1fr; max-width: 660px; padding: 28px 20px 48px; gap: 24px; }
+  .artwork { height: 200px; }
+  .claimCard { width: 100%; }
+}
+@media (max-width: 420px) {
+  .artwork { padding: 20px; height: 180px; }
+  .artwork > span { font-size: 135px; }
+  .artwork > div { font-size: 30px; }
+  .claimCard > div { padding: 22px; }
+}
