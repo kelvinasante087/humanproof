@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { Menu, X } from "lucide-react";
+import { Menu, X, RefreshCw } from "lucide-react";
 import { useOnboardingModal } from "@/components/onboarding-modal";
 import { useHumanSession } from "@/components/human-session";
+import { useHumanProofSignIn } from "@/components/humanproof-signin";
+import { toast } from "sonner";
 
 const privyConfigured = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 
@@ -19,7 +21,24 @@ function GuestActions({
   closeMenu?: () => void;
   mobile?: boolean;
 }) {
-  const start = () => {
+  const router = useRouter();
+  const { signIn, busy, error } = useHumanProofSignIn(true);
+
+  const handleLogin = async () => {
+    closeMenu?.();
+    const res = await signIn();
+    if (res.ok) {
+      toast.success("Welcome back!");
+      router.push("/account");
+    } else if (res.needsOnboarding) {
+      toast.info("No credential found for this passkey. Let's create one!");
+      openOnboarding();
+    } else if (error) {
+      toast.error(error);
+    }
+  };
+
+  const handleStart = () => {
     closeMenu?.();
     openOnboarding();
   };
@@ -27,15 +46,17 @@ function GuestActions({
   return (
     <>
       <button
-        onClick={start}
+        onClick={handleLogin}
+        disabled={busy}
         className={mobile
-          ? "w-full border-b border-white/10 px-6 py-5 text-left text-base font-semibold text-white transition-colors hover:bg-white/5"
-          : "cursor-pointer px-1 py-1 text-white transition-opacity hover:opacity-75"}
+          ? "w-full border-b border-white/10 px-6 py-5 text-left text-base font-semibold text-white transition-colors hover:bg-white/5 disabled:opacity-50 flex items-center gap-2"
+          : "cursor-pointer px-1 py-1 text-white transition-opacity hover:opacity-75 disabled:opacity-50 inline-flex items-center gap-1.5"}
       >
-        Log in
+        {busy && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+        <span>{busy ? "Checking passkey…" : "Log in"}</span>
       </button>
       <button
-        onClick={start}
+        onClick={handleStart}
         className={mobile
           ? "w-full border-b border-white/10 px-6 py-5 text-left text-base font-semibold text-white transition-colors hover:bg-white/5"
           : "cursor-pointer rounded-full bg-white px-5 py-2 font-semibold text-black shadow-sm transition-all duration-200 hover:bg-slate-200"}

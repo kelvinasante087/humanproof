@@ -1,4 +1,4 @@
-import { OnboardingCard } from "@/components/onboarding-card";
+import { PasskeyLoginCard } from "@/components/passkey-login-card";
 
 export default function LoginPage() {
   return (
@@ -7,7 +7,7 @@ export default function LoginPage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/10 blur-[140px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 w-full flex justify-center">
-        <OnboardingCard />
+        <PasskeyLoginCard />
       </div>
     </main>
   );
