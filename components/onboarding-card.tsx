@@ -98,14 +98,15 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
   const [worldError, setWorldError] = useState<string | null>(null);
   const worldServerError = useRef<string | null>(null);
 
-  // Step 3 State: Passkey
-  const [passkeyError, setPasskeyError] = useState<string | null>(null);
-
-  // Step 4 State: ENS Name
+  // Step 3 State: ENS Name
   const [ensLabel, setEnsLabel] = useState("");
+  const [ensChosen, setEnsChosen] = useState(false);
   const [claimingEns, setClaimingEns] = useState(false);
   const [claimedEns, setClaimedEns] = useState<string | null>(null);
   const [ensError, setEnsError] = useState<string | null>(null);
+
+  // Step 4 State: Passkey
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
 
   // Wallet
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -144,7 +145,10 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not restore your setup. Please retry.");
       setWorldVerified(Boolean(data.verified)); setClaimedEns(data.name ?? null);
-      if (data.pendingName) setEnsLabel(data.pendingName.replace(/\.humanproof\.eth$/, ""));
+      if (data.pendingName) {
+        setEnsLabel(data.pendingName.replace(/\.humanproof\.eth$/, ""));
+        setEnsChosen(true);
+      }
       await refreshHumanSession();
     } catch (error) { setResumeError(error instanceof Error ? error.message : "Could not restore setup."); }
   }, [ready, authenticated, authedFetch, refreshHumanSession]);
@@ -166,11 +170,12 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
   }, [ready, authenticated, walletAddress, createWallet]);
 
   // Determine current active flow step (1 to 5)
+  // Step 1: Account, Step 2: Proof of Human, Step 3: ENS Name, Step 4: Passkey & Mint, Step 5: Complete
   const currentStep = !authenticated
     ? 1
     : !worldVerified
     ? 2
-    : !hasPasskey
+    : !claimedEns && !ensChosen
     ? 3
     : !claimedEns
     ? 4
@@ -252,26 +257,17 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
     toast.error(msg);
   }
 
-  // Passkey Handler
-  async function handleAddPasskey() {
-    setPasskeyError(null);
-    try {
-      await linkWithPasskey();
-      toast.success("Device passkey successfully bound!");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Couldn't add passkey. Please try again.";
-      setPasskeyError(msg);
-      toast.error(msg);
-    }
-  }
-
-  // ENS Claim Handler
-  async function handleClaimEns(e: React.FormEvent) {
-    e.preventDefault();
+  // Step 4: Bind Passkey & Claim ENS on-chain
+  async function handlePasskeyAndClaim() {
     if (!ensLabel.trim() || !walletAddress) return;
+    setPasskeyError(null);
     setEnsError(null);
-    setClaimingEns(true);
     try {
+      if (!hasPasskey) {
+        await linkWithPasskey();
+        toast.success("Device passkey successfully bound!");
+      }
+      setClaimingEns(true);
       const res = await authedFetch("/api/ens/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -288,9 +284,9 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
       setClaimedEns(data.name || `${ensLabel.trim()}.humanproof.eth`);
       // Credential complete — re-ask the server so the dashboard shows this name immediately.
       await refreshHumanSession();
-    } catch {
-      const msg = "Network error while claiming your ENS handle.";
-      setEnsError(msg);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Couldn't complete setup. Please try again.";
+      setPasskeyError(msg);
       toast.error(msg);
     } finally {
       setClaimingEns(false);
@@ -312,6 +308,7 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
       setWorldVerified(false);
       setClaimedEns(null);
       setEnsLabel("");
+      setEnsChosen(false);
       setEmail("");
       setCode("");
       setWorldStatus("idle");
@@ -402,8 +399,8 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
             {[
               { num: 1, label: "Account" },
               { num: 2, label: "Proof of Human" },
-              { num: 3, label: "Passkey" },
-              { num: 4, label: "ENS Name" },
+              { num: 3, label: "ENS Name" },
+              { num: 4, label: "Passkey" },
             ].map((s, idx) => {
               const isCompleted = currentStep > s.num;
               const isCurrent = currentStep === s.num;
@@ -682,81 +679,34 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
               </motion.div>
             )}
 
-            {/* STEP 3: Passkey Device Binding */}
+            {/* STEP 3: Choose ENS Name */}
             {currentStep === 3 && (
-              <motion.div
+              <motion.form
                 key="step-3"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.22, ease: "easeOut" }}
-                className="flex flex-col text-left"
-              >
-                <div className="mb-8">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-[11px] font-medium tracking-wider uppercase text-teal-400 mb-8">
-                    <Fingerprint className="w-3.5 h-3.5" />
-                    <span>Step 3 of 4 · Device Security</span>
-                  </div>
-                  <h2 className="font-heading text-3xl sm:text-4xl text-white font-normal tracking-tight leading-[1.18] mb-3">
-                    Bind Device Passkey
-                  </h2>
-                  <p className="text-sm sm:text-base text-slate-400 font-normal leading-relaxed max-w-md">
-                    Tie your verified human credential directly to this device with Touch ID, Face ID, or Windows Hello.
-                  </p>
-                </div>
-
-                <div className="bg-[#141418] border border-emerald-500/20 rounded-xl p-4 flex items-center gap-3 mb-4">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                  <div className="text-xs">
-                    <span className="text-white font-medium block">Proof-of-Humanity Confirmed</span>
-                    <span className="text-slate-400">Zero-knowledge proof registered for this session.</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleAddPasskey}
-                  disabled={passkeyBusy}
-                  className="w-full bg-white text-black font-semibold text-sm py-3.5 rounded-xl hover:bg-slate-100 active:scale-[0.99] transition-all duration-200 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                >
-                  {passkeyBusy ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" /> Adding Passkey…
-                    </>
-                  ) : (
-                    <>
-                      <Fingerprint className="w-4 h-4" />
-                      <span>Add Device Passkey</span>
-                    </>
-                  )}
-                </button>
-
-                <p className="text-[11px] text-slate-500 text-center mt-3">
-                  One human, one device. Prevents credential sharing or automated bot attacks.
-                </p>
-
-                {passkeyError && (
-                  <p className="text-rose-400 text-xs text-center bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 mt-3">
-                    {passkeyError}
-                  </p>
-                )}
-              </motion.div>
-            )}
-
-            {/* STEP 4: Claim ENS Name */}
-            {currentStep === 4 && (
-              <motion.form
-                key="step-4"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                onSubmit={handleClaimEns}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const trimmed = ensLabel.trim().toLowerCase();
+                  if (!trimmed || trimmed.length < 3) {
+                    setEnsError("Handle must be at least 3 characters.");
+                    return;
+                  }
+                  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(trimmed)) {
+                    setEnsError("Handle can only contain letters, numbers, and hyphens (cannot start or end with a hyphen).");
+                    return;
+                  }
+                  setEnsError(null);
+                  setEnsChosen(true);
+                }}
                 className="flex flex-col text-left"
               >
                 <div className="mb-8">
                   <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[11px] font-medium tracking-wider uppercase text-indigo-400 mb-8">
                     <AtSign className="w-3.5 h-3.5" />
-                    <span>Step 4 of 4 · Identity</span>
+                    <span>Step 3 of 4 · Identity</span>
                   </div>
                   <h2 className="font-heading text-3xl sm:text-4xl text-white font-normal tracking-tight leading-[1.18] mb-3">
                     Claim your ENS Name
@@ -776,9 +726,11 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
                       type="text"
                       placeholder="username"
                       value={ensLabel}
-                      onChange={(e) => setEnsLabel(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                      onChange={(e) => {
+                        setEnsLabel(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+                        setEnsError(null);
+                      }}
                       required
-                      disabled={claimingEns}
                       autoFocus
                       className="w-full bg-transparent text-sm text-white placeholder:text-slate-500 focus:outline-none"
                     />
@@ -790,19 +742,11 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
 
                 <button
                   type="submit"
-                  disabled={claimingEns || !ensLabel.trim() || !walletAddress || Boolean(resumeError)}
+                  disabled={!ensLabel.trim()}
                   className="w-full bg-white text-black font-semibold text-sm py-3.5 rounded-xl hover:bg-slate-100 active:scale-[0.99] transition-all duration-200 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
-                  {claimingEns ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" /> Minting on-chain…
-                    </>
-                  ) : (
-                    <>
-                      <span>Claim & Complete Setup</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
+                  <span>Continue to Passkey</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
 
                 {ensError && (
@@ -811,6 +755,91 @@ function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
                   </p>
                 )}
               </motion.form>
+            )}
+
+            {/* STEP 4: Passkey Device Binding & Claim */}
+            {currentStep === 4 && (
+              <motion.div
+                key="step-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+                className="flex flex-col text-left"
+              >
+                <div className="mb-8">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-[11px] font-medium tracking-wider uppercase text-teal-400 mb-8">
+                    <Fingerprint className="w-3.5 h-3.5" />
+                    <span>Step 4 of 4 · Device Security</span>
+                  </div>
+                  <h2 className="font-heading text-3xl sm:text-4xl text-white font-normal tracking-tight leading-[1.18] mb-3">
+                    Bind Device Passkey
+                  </h2>
+                  <p className="text-sm sm:text-base text-slate-400 font-normal leading-relaxed max-w-md">
+                    Tie your verified human credential directly to this device with Touch ID, Face ID, or Windows Hello.
+                  </p>
+                </div>
+
+                {/* Selected Identity & Humanity Summary */}
+                <div className="bg-[#141418] border border-white/10 rounded-xl p-4 flex flex-col gap-3 mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">Chosen Handle:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-medium text-white">
+                        {ensLabel}.humanproof.eth
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEnsChosen(false);
+                          setEnsError(null);
+                        }}
+                        className="text-[11px] text-teal-400 hover:text-teal-300 underline underline-offset-2 cursor-pointer"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </div>
+                  <div className="border-t border-white/5 pt-2 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Proof of Humanity:</span>
+                    <span className="text-emerald-400 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Confirmed
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handlePasskeyAndClaim}
+                  disabled={passkeyBusy || claimingEns || !walletAddress || Boolean(resumeError)}
+                  className="w-full bg-white text-black font-semibold text-sm py-3.5 rounded-xl hover:bg-slate-100 active:scale-[0.99] transition-all duration-200 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {passkeyBusy ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" /> Adding Passkey…
+                    </>
+                  ) : claimingEns ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" /> Minting on-chain…
+                    </>
+                  ) : (
+                    <>
+                      <Fingerprint className="w-4 h-4" />
+                      <span>{hasPasskey ? "Mint ENS Handle" : "Add Passkey & Complete Setup"}</span>
+                    </>
+                  )}
+                </button>
+
+                <p className="text-[11px] text-slate-500 text-center mt-3">
+                  One human, one device. Prevents credential sharing or automated bot attacks.
+                </p>
+
+                {(passkeyError || ensError) && (
+                  <p className="text-rose-400 text-xs text-center bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 mt-3">
+                    {passkeyError || ensError}
+                  </p>
+                )}
+              </motion.div>
             )}
 
             {/* STEP 5: Credential Complete */}
