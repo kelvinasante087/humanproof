@@ -30,6 +30,7 @@ export type HumanSession = {
 };
 
 type SessionState = {
+  authKey?: string;
   loading: boolean;
   verified: boolean;
   name: string | null;
@@ -66,11 +67,13 @@ export function HumanSessionProvider({
   // Held in a ref so `refresh` stays referentially stable no matter how the getter is memoized —
   // a changing `refresh` would retrigger the mount effect below on every render.
   const getAccessTokenRef = useRef(getAccessToken);
+  const requestSequence = useRef(0);
   useEffect(() => {
     getAccessTokenRef.current = getAccessToken;
   }, [getAccessToken]);
 
   const refresh = useCallback(async () => {
+    const sequence = ++requestSequence.current;
     try {
       const headers: Record<string, string> = {};
       const getToken = getAccessTokenRef.current;
@@ -84,16 +87,18 @@ export function HumanSessionProvider({
       }
       const r = await fetch("/api/session", { cache: "no-store", headers });
       const d = await r.json();
+      if (sequence !== requestSequence.current) return;
       setState({
+        authKey,
         loading: false,
         verified: Boolean(d?.verified),
         name: typeof d?.name === "string" ? d.name : null,
         credentialed: typeof d?.credentialed === "boolean" ? d.credentialed : null,
       });
     } catch {
-      setState({ loading: false, verified: false, name: null, credentialed: null });
+      if (sequence === requestSequence.current) setState({ authKey, loading: false, verified: false, name: null, credentialed: null });
     }
-  }, []);
+  }, [authKey]);
 
   useEffect(() => {
     // Fetch on mount, and again whenever the Privy auth state settles or changes (sign in, sign
@@ -103,7 +108,7 @@ export function HumanSessionProvider({
   }, [refresh, authKey]);
 
   return (
-    <HumanSessionContext.Provider value={{ ...state, refresh }}>
+    <HumanSessionContext.Provider value={{ ...(state.authKey === authKey ? state : { loading: true, verified: false, name: null, credentialed: null }), refresh }}>
       {children}
     </HumanSessionContext.Provider>
   );

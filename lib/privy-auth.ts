@@ -43,10 +43,30 @@ export async function verifyPrivyUserId(token: string | undefined | null): Promi
     const { payload } = await jwtVerify(token, jwksFor(appId), {
       issuer: PRIVY_ISSUER,
       audience: appId,
+      algorithms: ["ES256"],
     });
     return typeof payload.sub === "string" && payload.sub ? payload.sub : null;
   } catch {
     // Any verification failure = not authenticated. Fail closed.
     return null;
   }
+}
+
+/** Verify account data signed by Privy; never trust wallet/passkey fields in a request body. */
+export async function verifiedAccountDetails(request: Request, expectedAccount: string) {
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+  const token = request.headers.get("privy-id-token");
+  if (!appId || !token) return null;
+  try {
+    const { payload } = await jwtVerify(token, jwksFor(appId), {
+      issuer: PRIVY_ISSUER, audience: appId, algorithms: ["ES256"],
+    });
+    if (payload.sub !== expectedAccount || typeof payload.linked_accounts !== "string") return null;
+    const accounts: unknown = JSON.parse(payload.linked_accounts);
+    if (!Array.isArray(accounts)) return null;
+    return {
+      hasPasskey: accounts.some(a => a && a.type === "passkey"),
+      wallets: accounts.filter(a => a && a.type === "wallet" && a.chain_type === "ethereum" && a.wallet_client_type === "privy" && typeof a.address === "string").map(a => a.address.toLowerCase() as string),
+    };
+  } catch { return null; }
 }

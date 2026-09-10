@@ -1,0 +1,28 @@
+specVersion: 1.3.0
+description: HumanProof public action receipts on Base Sepolia
+schema:
+  file: ./schema.graphql
+indexerHints:
+  prune: auto
+dataSources:
+  - kind: ethereum/contract
+    name: HumanProofAttestations
+    network: base-sepolia
+    source:
+      address: "0xc4C4Be84f403bA4a15e0161Ff97Ebfff1bEBb71e"
+      abi: HumanProofAttestations
+      # Creation block verified via historical eth_getCode.
+      startBlock: 46462718
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Receipt
+      abis:
+        - name: HumanProofAttestations
+          file: ./abis/HumanProofAttestations.json
+      eventHandlers:
+        - event: Sealed(indexed bytes32,indexed uint256,bytes32,string,uint256)
+          handler: handleSealed
+      file: ./src/mapping.ts

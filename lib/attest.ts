@@ -11,8 +11,11 @@ import {
   encodeAbiParameters,
   parseAbi,
   ContractFunctionRevertedError,
+  parseAbiItem,
+  parseEventLogs,
 } from "viem";
 import { sealPublicClient, getSealWallet, ATTESTATIONS, SEAL_EXPLORER } from "./seal/config";
+import { recoverLog } from "./chain-log-recovery";
 
 const sealAbi = parseAbi([
   "function seal(uint256 nullifierHash, bytes32 contentHash, string appId) returns (bytes32)",
@@ -72,9 +75,19 @@ export async function sealAction(
   nullifierHash: bigint,
   contentHash32: `0x${string}`,
   appId: string,
+  onSent?: (txHash: string) => Promise<void>,
+  pendingTxHash?: `0x${string}`,
+  recoveryStart?: bigint,
 ): Promise<SealResult> {
   if (!ATTESTATIONS) throw new Error("Attestations contract is not configured");
   const dedupeKey = attestDedupeKey(nullifierHash, contentHash32, appId);
+  if (pendingTxHash) {
+    const receipt = await sealPublicClient.waitForTransactionReceipt({ hash: pendingTxHash, timeout: 30000 });
+    if (receipt.status !== "success") throw new Error("SEAL_REVERTED");
+    const event = parseEventLogs({ abi: [parseAbiItem("event Sealed(bytes32 indexed dedupeKey,uint256 indexed nullifierHash,bytes32 contentHash,string appId,uint256 timestamp)")], logs: receipt.logs }).find(log => log.address.toLowerCase() === ATTESTATIONS?.toLowerCase() && log.args.dedupeKey === dedupeKey);
+    if (!event) throw new Error("SEAL_RECEIPT_MISMATCH");
+    return { sealRef: dedupeKey, txHash: pendingTxHash, explorer: `${SEAL_EXPLORER}/tx/${pendingTxHash}` };
+  }
 
   // Deterministic duplicate check (read-only, no gas): a reverted duplicate tx doesn't reliably
   // throw at simulate/write and waitForTransactionReceipt resolves even for a reverted tx — so we
@@ -85,7 +98,17 @@ export async function sealAction(
     functionName: "isSealed",
     args: [dedupeKey],
   });
-  if (already) throw new AlreadySealedOnChainError();
+  if (already) {
+    // Recover a confirmed transaction when the response or database finalization was lost.
+    const latest = await sealPublicClient.getBlockNumber();
+    // Legacy incomplete rows lack a starting block; search one day of Base blocks for those.
+    const from = recoveryStart ?? (latest > BigInt(43200) ? latest - BigInt(43200) : BigInt(0));
+    const log = await recoverLog(from, latest, (fromBlock, toBlock) => sealPublicClient.getLogs({ address: ATTESTATIONS,
+      event: parseAbiItem("event Sealed(bytes32 indexed dedupeKey,uint256 indexed nullifierHash,bytes32 contentHash,string appId,uint256 timestamp)"),
+      args: { dedupeKey }, fromBlock, toBlock }), () => true);
+    if (!log) throw new Error("Seal receipt is temporarily unavailable");
+    return { sealRef: dedupeKey, txHash: log.transactionHash, explorer: `${SEAL_EXPLORER}/tx/${log.transactionHash}` };
+  }
 
   const wallet = getSealWallet();
   try {
@@ -97,10 +120,11 @@ export async function sealAction(
       args: [nullifierHash, contentHash32, appId],
     });
     const txHash = await wallet.writeContract(sim.request);
-    const receipt = await sealPublicClient.waitForTransactionReceipt({ hash: txHash });
+    await onSent?.(txHash);
+    const receipt = await sealPublicClient.waitForTransactionReceipt({ hash: txHash, timeout: 30000 });
     // A reverted receipt here means it was sealed in the tiny window between the read and the write
     // (a race) — still a duplicate.
-    if (receipt.status === "reverted") throw new AlreadySealedOnChainError();
+    if (receipt.status === "reverted") throw new Error("SEAL_REVERTED");
     return { sealRef: dedupeKey, txHash, explorer: `${SEAL_EXPLORER}/tx/${txHash}` };
   } catch (err) {
     if (err instanceof AlreadySealedOnChainError) throw err;

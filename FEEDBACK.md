@@ -4,7 +4,7 @@ Living log, written **while** building — not a last-day write-up. World asked 
 be blunt ("don't be nice, tell us what's bad"), so this is only real friction we actually
 hit, filed under the four topics World grades. Never invented.
 
-**Track:** Selfie Check (building in the staging sandbox / Orb simulator).
+**Track:** Selfie Check (approved iOS Sandbox; earlier rehearsal used the staging simulator).
 **Stack:** Next.js 16, `@worldcoin/idkit` 4.2.3, `@worldcoin/idkit-server` 1.1.1.
 
 ---
@@ -66,6 +66,17 @@ hit, filed under the four topics World grades. Never invented.
 - _(pending — will fill when we work in the portal for the signing key and verify calls)_
 
 ## (c) Sandbox App (states, proofs, test users, errors, edge cases)
+
+### September 9 — iOS Sandbox crashes immediately after account creation
+
+- **Device/build:** iPhone 8; `[SANDBOX] World ID` 1.0.100 (29165), installed through approved TestFlight access. The tester reports the device is compatible. Exact iOS version and crash diagnostics have not yet been collected.
+- **Reproduction reported by the tester:** open the installed full Sandbox app → select Create account → account creation reports success → the splash/loading screen leading into the main app crashes. Subsequent attempts load that screen and crash again.
+- **Expected:** account creation should lead into the app, or an actionable, recoverable error should explain why it cannot continue.
+- **Observed evidence:** supplied TestFlight screenshots identify the build and show the system's app-crash prompt. The crash occurs before any HumanProof signup, QR scan, deep link or IDKit request, so it is not triggered by our integration. The underlying cause is unconfirmed; this report does not establish device incompatibility.
+- **Impact:** blocks access to the main Sandbox experience and prevents starting the end-to-end Selfie Check test after tester approval and successful account creation.
+- **Additional friction:** TestFlight exposes App Clips alongside the full app. Attempting to install the clip warns that it will delete/replace the Sandbox app, leaving the tester unsure whether this is a required next step or a separate test experience. No App Clip installation was confirmed. Clearly label the intended full-app path and explain when, if ever, Selfie testers need the App Clip.
+- **Requested improvement:** investigate the post-signup crash on iPhone 8/build 29165, provide a recovery path that preserves the newly created account, and clearly identify supported devices/iOS versions and the recommended test build. Capture diagnostics or provide a support reference when startup fails repeatedly.
+- **Status:** recorded locally for the World feedback submission; not yet sent to World. Selfie verification remains blocked on the phone. App-level Selfie enablement is a separate integration check, not an established cause of this crash.
 
 - **The simulator has no "Selfie" credential — you can't actually test Selfie Check in it.**
   The staging simulator (at `simulator.worldcoin.org`) offers Orb, Secure Document, Document,
@@ -212,3 +223,13 @@ passkey login + verifying it server-side._
   wallet was already present for the same account, so the airdrop payout worked in the same session
   with no extra sign-in. The invisible-wallet + passwordless + native-passkey combo is exactly the
   "feels like signing into an app" experience Privy pitches.
+
+## September 8 — onboarding and demo corrections
+
+Partner readiness must precede new setup, but outages and user cancellation still need durable recovery. Simulator availability is not Selfie sandbox approval. Credential issuance now requires signed Privy account data to prove passkey and wallet ownership; enable identity tokens in Privy before marking account readiness enabled. Proofit gates posting only, allows multiple posts per product and persists completed posts. Airdroppa names the company; PROOF names its token. See docs/day-8-reliability.md for release checks and limitations.
+
+At 21:46 UTC, after Kelvin authenticated to the Privy dashboard, the HumanProof identity-token setting was enabled and confirmed on a fresh settings page. Local readiness passed all four checks in simulator mode. Signed-in HumanProof token validation and the coordinated production release remain separate checks.
+
+World ID Sandbox access was approved through TestFlight on September 8. The approved beta is explicitly for registering and trying credentials without committing them to production. HumanProof now targets the `sandbox` SDK environment locally and marks the access flag approved. The World action had no successful verification at configuration time, so the first full phone-to-backend Selfie result remains an acceptance test.
+
+On September 9 the local readiness endpoint passed all four checks in Sandbox Selfie mode. The provider status was removed from the customer-facing signup card: readiness now runs silently before account creation, and only a short HumanProof availability error appears if a required check fails. A mobile browser check showed the restored HumanProof onboarding with no console errors. Credential and unfinished-onboarding ownership is indexed by Privy account plus World environment, so an earlier simulator credential cannot block the same account's legitimate Sandbox run; cross-account takeover and same-environment replacement tests still fail closed.

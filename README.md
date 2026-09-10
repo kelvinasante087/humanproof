@@ -1,87 +1,50 @@
 # HumanProof
 
-**Live demo → [humanproof-flame.vercel.app](https://humanproof-flame.vercel.app)**
+A reusable verified-human credential, demonstrated through **Proofit** and **Airdroppa**. Built for ETHOnline 2026.
 
-**The verified-human layer.** Prove that a real, unique human did something, sealed onchain, without storing any personal data.
+Live demo: https://humanproof-flame.vercel.app
 
-Built for [ETHOnline 2026](https://ethglobal.com/events/ethonline2026).
+## What the demos show
 
-## The idea
+- **Proofit (`/reviews`)** is a public reviews community. Anyone can read and search, including bots and AI agents. Email sign-in is available without creating a HumanProof credential. Only posting requires a completed HumanProof credential. People may post more than once about the same product; exact request retries reuse their proof receipt.
+- **Airdroppa (`/airdrop`)** is a fictional crypto company distributing **500 PROOF** per verified human on Base Sepolia. HumanProof gates entry. The payout contract requires an issuer-signed authorization bound to the recipient, campaign, chain and expiry. It enforces one payout per anonymous human claim identifier. A cancelled transaction does not consume the allocation. A confirmed payout can recover its separately recorded proof without paying again.
+- **Public verification (`/verify/:id`)** shows an action receipt and a Base Sepolia explorer link. The chain proves that HumanProof's authorized server recorded the attestation; humanity verification takes place off-chain. `/verify` adds public Graph-backed discovery and local content-integrity checking.
 
-The internet is drowning in bots, fake accounts, and AI-generated everything. HumanProof is a drop-in layer any app can plug into to guarantee an action was taken by a real, unique human, and to prove it later, without ever exposing who they are.
+## Onboarding and recovery
 
-- **Verify once.** A user proves they are a real, unique human with World ID Selfie Check, binds a device passkey, and gets a reusable, device-bound credential with an ENS username.
-- **Attest anything.** Any app calls one endpoint to attest that a verified human performed an action. The attestation is sealed onchain: a salted fingerprint of the human, a content hash of the action, the calling app's id, and a timestamp — never identity, never the content.
-- **Verify by anyone.** A public page confirms that a verified unique human did this, at this time, with no identity and no raw content revealed.
+Before signup, a readiness check tests account-service connectivity, the active World verification path and its sandbox entitlement, the authenticated credential store and ENS name issuance prerequisites. This is a snapshot, not a guarantee of future availability, passkey device support or a successful phone proof.
 
-## A primitive, not a feature
+After humanity verification, HumanProof stores a salted fingerprint, its provider/environment and the owning Privy account as unfinished setup. It does not store the raw nullifier or proof. Closing the page or signing out does not erase this progress. After signing back in, the server restores the next step. A name reservation and transaction reference make interrupted issuance recoverable. Completion is reported only after a successful on-chain receipt and durable credential record.
 
-HumanProof is one call — *"is this a verified, unique human doing this thing? — and give me sealed proof"* — that a business drops in wherever it needs it. Same primitive, different placement:
+**World ID is the active provider.** The live demo is pinned to World staging so the browser simulator can complete the flow. The approved World Sandbox app, RP signing key and verification API configuration remain preserved for the phone path. Self remains implemented as a parked fallback. The iPhone 8 Sandbox app previously crashed during its TestFlight launch, so Sandbox remains a separate acceptance path. See `docs/self-integration.md` and `docs/self-support-2026-09-10.md` for the preserved configurations and evidence.
 
-- **Reviews gates the ACTION** — the door is open, anyone can read; only *posting* requires a human. Frame: abuse prevention (no review farms).
-- **Airdrop gates the DOOR** — you *sign in as a verified human to enter*, then claim once. Frame: Sybil resistance (no bot farms draining the drop).
+## Architecture
 
-One primitive, placed at the action in one app and at the entrance in the other. The business decides where the human check sits.
+Next.js 16 / React / TypeScript; Privy email login, embedded wallets and passkeys; World IDKit Selfie Check; parked Self SDK; Convex; The Graph receipt index; ENS v2 on Sepolia; native `HumanProofAttestations` and `ProofToken` contracts on Base Sepolia.
 
-## Showcase
+All database functions are internal to Convex. Next.js calls an allowlisted HTTP bridge authenticated with a server-only secret. Browser requests require a verified Privy access token and an account-bound HumanProof cookie. Privy-signed identity tokens prove passkey and embedded-wallet ownership at credential issuance and payout authorization. Account recovery cannot overwrite an existing credential owner.
 
-Two thin demo apps ride on the same `/attest` layer, showing the primitive from two angles.
+Current deployment addresses are maintained in `lib/ens/humanproof.sepolia.json`, `lib/seal/attestations.baseSepolia.json` and `lib/airdrop/proof.baseSepolia.json`. The signed-claim payout contract was deployed September 10 on Base Sepolia; the older unrestricted token is recorded as legacy. A real credential-bound payout remains an acceptance test.
 
-### Reviews — gate the action
+## Privacy and boundaries
 
-A reviews product where anyone can read, but only a verified human can post. Every posted review carries proof it came from a genuine, unique person and links to its public verify page — so bots and review farms can't get in, and one human can't review the same item twice. The door is open; the *action* is gated.
+HumanProof does not receive or store face images, government documents or raw World nullifiers. It does retain account identifiers, salted fingerprints, chosen ENS names, avatars, unfinished setup and action receipts. Privy handles email authentication and wallet accounts.
 
-### Airdrop — a real, Sybil-proof payout (Privy)
+On-chain attestations expose a consistent salted fingerprint across the demo apps. They are **pseudonymous and linkable**, not pairwise identities or guaranteed anonymity. Public ENS names, wallets, reviews and transaction data can also be linked. Passkeys may sync between a user's devices; this is not a one-physical-device guarantee.
 
-A PROOF token airdrop where each human can claim exactly once. The claim is a real Privy embedded-wallet transaction on Base Sepolia — testnet value actually lands in the human's wallet and the balance changes on screen — with gas sponsored by Privy and a treasury top-up as a fallback. The one-claim-per-human block is keyed to the **nullifier, through `/attest`** — not the wallet, not the browser — so a second claim, or a fresh wallet, is refused. That is the "no one claims twice" guarantee for airdrops: only real, unique humans get paid, and only once. (PROOF token on Base Sepolia: [`0x14ee4a48038B04aCf56B1F7bcF94Db96f09f0FEe`](https://sepolia.basescan.org/address/0x14ee4a48038B04aCf56B1F7bcF94Db96f09f0FEe).)
+Both demos run on one origin. An initial registered-client identity connection now uses consent, exact redirect allowlists, S256 PKCE and short-lived single-use codes. See `docs/external-identity.md` and its separate-server example. No clients are enabled by default; real-credential end-to-end validation is pending. This is not a full OAuth/OIDC service or external action SDK. Continuous revocation and refresh are not implemented.
 
-## How it works
+## Local setup
 
-HumanProof is one primitive any app can call: *"is this a verified, unique human doing this thing — and give me sealed, checkable proof."* Everything below serves that single call.
+1. `npm ci`. Copy `.env.example` to `.env.local` and configure the listed services. Keep all real secrets out of Git.
+2. In Privy, enable passkeys, allow the app origin, and enable **User management > Authentication > Advanced > Return user data in an identity token**. Then set `PRIVY_IDENTITY_TOKENS_ENABLED=true` in the app environment.
+3. Set a random 32+ character `HUMANPROOF_BACKEND_SECRET` in both Next.js and the matching Convex deployment. The app's `NEXT_PUBLIC_CONVEX_URL` / `CONVEX_URL` and optional `CONVEX_HTTP_URL` must refer to that same deployment.
+4. Deploy the Convex functions using `npx convex dev --once` for development or `npx convex deploy` for production. Production and development are separate; updating one does not update the other.
+5. Configure Self as described in `docs/self-integration.md`, ENS/seal keys and the Graph index in `docs/receipt-network.md`. `/api/onboarding/readiness` reports safe readiness information.
+6. `npm run dev`. Run `npm test`, `npm run lint` and `npm run build` before release.
 
-- **Prove the human — World ID (Selfie Check).** A person proves once that they're a real, unique human. No Orb required. HumanProof reads only the World *nullifier* (the unique-per-person signal) — never a face or a document.
-- **Bind the device — passkey (WebAuthn).** A passkey ties that verified human to their device, so signing back in later is one tap, not another verification.
-- **Seal the action — natively, on Base Sepolia.** When a verified human acts, the attestation is sealed onchain through `HumanProofAttestations` — a contract written and deployed from scratch during ETHOnline (Base Sepolia, [`0xc4C4Be84f403bA4a15e0161Ff97Ebfff1bEBb71e`](https://sepolia.basescan.org/address/0xc4C4Be84f403bA4a15e0161Ff97Ebfff1bEBb71e)). Each seal records four things and nothing else: a **salted, one-way fingerprint** of the World nullifier, a **content hash** of the action, the **calling app's id**, and a **timestamp**. The raw nullifier, the person's identity, and the action's content never touch the chain. Sealing is worker-gated (only HumanProof's server can write), and a duplicate `(human, action)` reverts `AlreadySealed` — one seal per human per action.
-- **Check it — anyone.** A public verify page states, in plain English, that a real, unique human did this, at this time, in this app — with the Base Sepolia transaction linked underneath as the trustless receipt. No name, no identity, nothing about who.
+## Submission and attribution
 
-An outside app plugs in with a single request to `/attest` (a content hash of the action + its app id); the verified human comes from their HumanProof session, and the app gets back a seal reference and an on-chain transaction — never anything about who the human is.
+Application and contract work was developed during ETHOnline. Sealing is native code in this repository, not the previously considered external Chronos-V service. Historical plans remain in `docs/`; `docs/day-8-reliability.md` records the current reliability work.
 
-## Identity: a name only a verified human can claim (ENS v2)
-
-Part of the credential is a portable handle — `<name>.humanproof.eth`, issued on ENS v2 (Sepolia). Names are minted by a from-scratch on-chain registrar, `HumanProofRegistrar` ([`0x18489F37F6dE05AFa970A427cF3652281cFc8d4c`](https://sepolia.etherscan.io/address/0x18489F37F6dE05AFa970A427cF3652281cFc8d4c)), whose claim condition lives in the contract, not the app:
-
-- The claim requires an **issuer-signed EIP-712 "humanity voucher"** — evidence that HumanProof's server verified this person as a real, unique human (via World Selfie Check) and authorized exactly this claimant and label.
-- The registrar keeps an on-chain **one-nullifier-one-name ledger**: each human's nullifier can claim exactly once.
-- The registrar is the *only* minter of subnames (its own registrar role is granted, HumanProof's revoked), so a name can be issued **only** to a verified, unique human — that rule is enforced on-chain.
-
-Honest boundary: the "is this a unique human?" check is World's, performed off-chain; the contract enforces the issuer attestation plus on-chain uniqueness. No World proof is faked on-chain. Names resolve on Sepolia through the ENS v2 Universal Resolver.
-
-## Privacy
-
-Nothing personal is stored. World returns a zero-knowledge proof, not data. Onchain we keep only anonymous attestations. Verify and discard, by design.
-
-Signing in uses an email — a private app account (via Privy) — which is never part of the public proof. A public verification reveals only an anonymous fingerprint, a timestamp, and a content hash. No name, no email, no identity.
-
-## Status
-
-In progress. Building at ETHOnline 2026 (September 4 to 16).
-
-## Disclosure
-
-All application code and smart contracts in this repository were written from scratch during ETHOnline 2026 (September 4 to 16). Sealing is **native**: an attestation contract (`HumanProofAttestations`) we wrote and deployed ourselves on Base Sepolia anchors every proof — it is **not** an external or pre-existing service. (An earlier plan considered calling a separate hosted sealing engine; on inspection it required live device-sensor forensics and couldn't seal a lightweight action attestation, so we built the native contract instead. It remains a possible production backend — noted here as related work, not a dependency.) The plans and specifications that preceded each build are committed in `docs/` as the build record.
-
-## AI attribution
-
-- **Code** — built with **Claude Code** (Anthropic), working in plan mode. The plan/spec written before each build is committed in [`docs/`](docs/) as the record.
-- **Brand & screens** — designed with **Google Stitch** and **Claude**, then finished in **Figma**.
-- **Direction** — every step was directed, edited, and verified by me (Kelvin). AI is the tool; the decisions, the integration, and the review are mine.
-
-## Design
-
-The brand and every screen were designed from scratch during ETHOnline 2026, from a locked direction — a deep-navy credential card, a teal verification mark, and a single indigo action — and finished in Figma. Direction and exported assets live in [`design/`](design/).
-
-Figma file: [Credential Wallet Cards — v0.1](https://www.figma.com/design/ncK8uSrdsUefXuzwFEy2zO/Credential-Wallet-Cards-%E2%80%94-v0.1?node-id=0-1&p=f&t=wQHp5BdSg9GXOpS9-0)
-
----
-
-Kelvin Asante · Accra, Ghana
+Code and review used Claude Code and OpenAI Codex, directed by Kelvin Asante. Design work used Google Stitch, Claude and Figma. The actual phone proof, live partner configuration and final deployment must be verified separately from local tests. PROOF is a testnet demonstration token with no monetary value.

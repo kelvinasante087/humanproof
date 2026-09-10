@@ -1,81 +1,56 @@
-/**
- * Server-only Convex client. HumanProof's off-chain store keeps only anonymous salted hashes —
- * never the raw nullifier, never personal data. Day-5 usage is all server-side (route handlers),
- * so we talk to Convex over HTTP with ConvexHttpClient and reference functions by name (no
- * dependency on convex/_generated, which only exists after `npx convex dev`).
- *
- * If the Convex URL isn't set yet (before Convex is provisioned), `dbConfigured()` is false and
- * callers degrade gracefully instead of crashing — the site stays green.
- *
- * Production is PINNED to the app's prod Convex deployment (`elated-clownfish-975`) here in code.
- * Why hardcode it: this URL is public (a deployment address, not a secret — it's only ever used
- * server-side here, never sent to the browser), and the Vercel env var for it kept getting tangled
- * across multiple Convex projects, repeatedly pointing the live site at the wrong/empty deployment.
- * Pinning prod in code removes that fragile moving part — the live site can't drift again. To move
- * prod to a different Convex deployment later, change PROD_CONVEX_URL. Local dev is unaffected: it
- * reads `.env.local` (dev deployment `rare-fennec-188`) as before.
- */
-import { ConvexHttpClient } from "convex/browser";
+import { backend, backendUrl } from "./backend";
 import { makeFunctionReference } from "convex/server";
 import { ConvexError } from "convex/values";
-
-/** The app's production Convex backend (public deployment address; see note above). */
-const PROD_CONVEX_URL = "https://elated-clownfish-975.convex.cloud";
-
-const url =
-  process.env.NODE_ENV === "production"
-    ? PROD_CONVEX_URL
-    : (process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL);
+import { VERIFICATION_ENV as WORLD_ENV } from "./verification/config";
 
 /** True once the Convex deployment URL is configured. */
 export function dbConfigured(): boolean {
-  return Boolean(url);
+  return Boolean(backendUrl() && process.env.HUMANPROOF_BACKEND_SECRET);
 }
 
-function client(): ConvexHttpClient {
-  if (!url) throw new Error("CONVEX_URL is not set");
-  return new ConvexHttpClient(url);
+function client() {
+  return backend;
 }
 
 const recordCredentialRef = makeFunctionReference<
   "mutation",
-  { nullifierHash: string; name: string; privyUserId?: string },
+  { nullifierHash: string; name: string; privyUserId?: string; environment?: string },
   { recorded: boolean }
 >("credentials:record");
 
 const getCredentialByNullifierRef = makeFunctionReference<
   "query",
-  { nullifierHash: string },
+  { nullifierHash: string; environment?: string },
   { name: string } | null
 >("credentials:getByNullifier");
 
 const getAvatarRef = makeFunctionReference<
   "query",
-  { nullifierHash: string },
+  { nullifierHash: string; environment?: string },
   { avatar: string | null }
 >("credentials:getAvatar");
 
 const setAvatarRef = makeFunctionReference<
   "mutation",
-  { nullifierHash: string; avatar: string },
+  { nullifierHash: string; avatar: string; environment?: string },
   { saved: boolean }
 >("credentials:setAvatar");
 
 const getCredentialByPrivyUserRef = makeFunctionReference<
   "query",
-  { privyUserId: string },
+  { privyUserId: string; environment?: string },
   { nullifierHash: string; name: string } | null
 >("credentials:getByPrivyUser");
 
 const linkCredentialAccountRef = makeFunctionReference<
   "mutation",
-  { nullifierHash: string; name: string; privyUserId: string },
+  { nullifierHash: string; name: string; privyUserId: string; environment?: string },
   { linked: boolean }
 >("credentials:linkAccount");
 
 const reserveSealRef = makeFunctionReference<
   "mutation",
-  { dedupeKey: string; nullifierHash: string; appId: string; contentHash: string },
+  { dedupeKey: string; nullifierHash: string; appId: string; contentHash: string; startBlock?: string },
   string
 >("seals:reserve");
 
@@ -162,7 +137,7 @@ export async function recordCredential(
   privyUserId?: string,
 ): Promise<void> {
   try {
-    await client().mutation(recordCredentialRef, { nullifierHash, name, privyUserId });
+    await client().mutation(recordCredentialRef, { nullifierHash, name, privyUserId, environment: WORLD_ENV });
   } catch (err) {
     if (convexCode(err) === "ALREADY_RECORDED") throw new AlreadyRecordedError();
     throw err;
@@ -175,6 +150,7 @@ export async function reserveSeal(args: {
   nullifierHash: string;
   appId: string;
   contentHash: string;
+  startBlock?: string;
 }): Promise<string> {
   try {
     return await client().mutation(reserveSealRef, args);
@@ -233,19 +209,19 @@ export async function listSealsByNullifier(nullifierHash: string): Promise<Accou
 
 /** The ENS name this human claimed, by their salted nullifier hash — or null. Best-effort display. */
 export async function getCredentialName(nullifierHash: string): Promise<string | null> {
-  const row = await client().query(getCredentialByNullifierRef, { nullifierHash });
+  const row = await client().query(getCredentialByNullifierRef, { nullifierHash, environment: WORLD_ENV });
   return row?.name ?? null;
 }
 
 /** The profile avatar this human chose, by their salted nullifier hash — or null if unset. */
 export async function getCredentialAvatar(nullifierHash: string): Promise<string | null> {
-  const { avatar } = await client().query(getAvatarRef, { nullifierHash });
+  const { avatar } = await client().query(getAvatarRef, { nullifierHash, environment: WORLD_ENV });
   return avatar;
 }
 
 /** Persist this human's chosen avatar, keyed by their salted nullifier hash. */
 export async function setCredentialAvatar(nullifierHash: string, avatar: string): Promise<boolean> {
-  const { saved } = await client().mutation(setAvatarRef, { nullifierHash, avatar });
+  const { saved } = await client().mutation(setAvatarRef, { nullifierHash, avatar, environment: WORLD_ENV });
   return saved;
 }
 
@@ -257,7 +233,7 @@ export async function setCredentialAvatar(nullifierHash: string, avatar: string)
 export async function getCredentialByPrivyUser(
   privyUserId: string,
 ): Promise<{ nullifierHash: string; name: string } | null> {
-  return await client().query(getCredentialByPrivyUserRef, { privyUserId });
+  return await client().query(getCredentialByPrivyUserRef, { privyUserId, environment: WORLD_ENV });
 }
 
 /**
@@ -270,5 +246,5 @@ export async function linkCredentialAccount(
   name: string,
   privyUserId: string,
 ): Promise<void> {
-  await client().mutation(linkCredentialAccountRef, { nullifierHash, name, privyUserId });
+  await client().mutation(linkCredentialAccountRef, { nullifierHash, name, privyUserId, environment: WORLD_ENV });
 }

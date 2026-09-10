@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
+import { HUMAN_SESSION_COOKIE as WORLD_SESSION_COOKIE } from "@/lib/verification/config";
 import { readSessionForAccount } from "@/lib/session";
 import { provenAccount } from "@/lib/account-session";
 import { dbConfigured, getCredentialByPrivyUser } from "@/lib/db";

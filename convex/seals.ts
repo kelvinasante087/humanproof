@@ -13,13 +13,19 @@ export const reserve = mutation({
     nullifierHash: v.string(),
     appId: v.string(),
     contentHash: v.string(),
+    startBlock: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("seals")
       .withIndex("by_dedupe", (q) => q.eq("dedupeKey", args.dedupeKey))
       .unique();
-    if (existing) throw new ConvexError({ code: "ALREADY_SEALED" });
+    if (existing) {
+      if (existing.sealRef || existing.txHash) return existing._id;
+      if (Date.now() - existing.createdAt < 120000) throw new ConvexError({ code: "SEAL_PENDING" });
+      await ctx.db.patch(existing._id, { createdAt: Date.now() });
+      return existing._id;
+    }
     return await ctx.db.insert("seals", { ...args, createdAt: Date.now() });
   },
 });
@@ -36,8 +42,18 @@ export const finalize = mutation({
 export const release = mutation({
   args: { id: v.id("seals") },
   handler: async (ctx, { id }) => {
-    await ctx.db.delete(id);
+    const row = await ctx.db.get(id);
+    if (row && !row.sealRef && !row.txHash) await ctx.db.delete(id);
   },
+});
+
+export const getByDedupe = query({
+  args: { dedupeKey: v.string() },
+  handler: (ctx, { dedupeKey }) => ctx.db.query("seals").withIndex("by_dedupe", q => q.eq("dedupeKey", dedupeKey)).unique(),
+});
+export const sent = mutation({
+  args: { id: v.id("seals"), txHash: v.string() },
+  handler: async (ctx, { id, txHash }) => { await ctx.db.patch(id, { txHash }); return null; },
 });
 
 /**
@@ -85,5 +101,15 @@ export const listByNullifier = query({
         txHash: row.txHash ?? null,
         createdAt: row.createdAt,
       }));
+  },
+});
+
+/** Called by the server only after a confirmed reverted receipt. */
+export const clearReverted = mutation({
+  args: { id: v.id("seals") },
+  handler: async (ctx, { id }) => {
+    const row = await ctx.db.get(id);
+    if (row && !row.sealRef) await ctx.db.patch(id, { txHash: undefined, createdAt: 0 });
+    return null;
   },
 });

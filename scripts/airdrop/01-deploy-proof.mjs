@@ -23,11 +23,12 @@ const STATE_PATH = new URL("../../lib/airdrop/proof.baseSepolia.json", import.me
 const state = JSON.parse(readFileSync(STATE_PATH));
 
 // --- compile ---
-const source = readFileSync(new URL("../../contracts/ProofToken.sol", import.meta.url), "utf8");
+const source = readFileSync(new URL("../../contracts/ProofToken.sol", import.meta.url), "utf8").replace(/^\uFEFF/, "");
 const input = {
   language: "Solidity",
   sources: { "ProofToken.sol": { content: source } },
   settings: {
+    evmVersion: "shanghai",
     optimizer: { enabled: true, runs: 200 },
     outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } },
   },
@@ -52,18 +53,26 @@ if (bal === 0n) {
   process.exit(1);
 }
 
-if (state.token) {
+if (state.token && !process.argv.includes("--replace")) {
   console.log(`already deployed at ${state.token} — nothing to do`);
   process.exit(0);
 }
 
-const hash = await wallet.deployContract({ abi: artifact.abi, bytecode, args: [] });
+const issuerKey = process.env.HUMANPROOF_ISSUER_PRIVATE_KEY;
+if (!issuerKey) throw new Error("Missing HUMANPROOF_ISSUER_PRIVATE_KEY");
+const issuer = privateKeyToAccount(issuerKey).address;
+const hash = await wallet.deployContract({ abi: artifact.abi, bytecode, args: [issuer] });
 console.log(`deploy tx ${hash} — waiting...`);
 const receipt = await publicClient.waitForTransactionReceipt({ hash });
+if (receipt.status !== "success" || !receipt.contractAddress) throw new Error("Deployment failed");
 const address = getAddress(receipt.contractAddress);
 console.log(`ProofToken deployed ${address} (${receipt.status}, gas ${receipt.gasUsed})`);
 
+if (state.token) state.legacyTokens = [...(state.legacyTokens || []), state.token];
 state.token = address;
+state.issuer = issuer;
+state.claimVersion = 2;
+state.deploymentBlock = receipt.blockNumber.toString();
 state.deployer = account.address;
 writeFileSync(STATE_PATH, JSON.stringify(state, null, 2) + "\n");
 console.log("\nstate:", JSON.stringify(state, null, 2));

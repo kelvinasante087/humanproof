@@ -1,3 +1,5 @@
+> Historical planning/reference document. Current implementation and limits are recorded in humanproof/README.md and humanproof/docs/day-8-reliability.md (September 8). Earlier one-review limits, pairwise-privacy promises, external sealing plans and assumed Selfie access are superseded.
+
 # Day 6 — Showcase apps + verify page + "For Developers" (spec)
 
 _Written before the code (AI-attribution proof). HumanProof is a reusable proof-of-human

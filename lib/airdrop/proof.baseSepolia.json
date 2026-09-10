@@ -1,6 +1,12 @@
 {
   "chain": "base-sepolia",
   "chainId": 84532,
-  "token": "0x14ee4a48038B04aCf56B1F7bcF94Db96f09f0FEe",
-  "deployer": "0x2cAC8fD39381E5209D0F57330B8b9fdd9FbaDA75"
+  "token": "0x2d2560682ae2E84BB61c7329b2C647092E40f22A",
+  "deployer": "0x2cAC8fD39381E5209D0F57330B8b9fdd9FbaDA75",
+  "legacyTokens": [
+    "0x14ee4a48038B04aCf56B1F7bcF94Db96f09f0FEe"
+  ],
+  "issuer": "0x0dCD429f3868Fe37147bc55DB70d1Fe83237a711",
+  "claimVersion": 2,
+  "deploymentBlock": "46637098"
 }

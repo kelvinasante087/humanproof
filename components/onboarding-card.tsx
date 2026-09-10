@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,8 @@ import {
 } from "@worldcoin/idkit";
 import { WORLD_APP_ID, WORLD_ACTION, WORLD_ENV } from "@/lib/world";
 import { MobileWorldSimulatorLink } from "@/components/mobile-world-simulator-link";
+import { SelfVerify } from "@/components/self-verify";
+import { VERIFICATION_PROVIDER } from "@/lib/verification/config";
 import { useHumanSession } from "@/components/human-session";
 import { useAuthedFetch } from "@/components/use-authed-fetch";
 import { motion, AnimatePresence } from "motion/react";
@@ -56,6 +58,11 @@ type RpContext = {
 };
 
 export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
+  const { user } = usePrivy();
+  return <OnboardingCardBody key={user?.id ?? "guest"} onClose={onClose} />;
+}
+
+function OnboardingCardBody({ onClose }: { onClose?: () => void } = {}) {
   const { ready, authenticated, user, logout } = usePrivy();
   const { sendCode, loginWithCode, state: emailState } = useLoginWithEmail();
   const { linkWithPasskey, state: passkeyState } = useLinkWithPasskey();
@@ -89,6 +96,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
   const [worldWidgetOpen, setWorldWidgetOpen] = useState(false);
   const [worldStatus, setWorldStatus] = useState<"idle" | "preparing" | "verifying" | "error">("idle");
   const [worldError, setWorldError] = useState<string | null>(null);
+  const worldServerError = useRef<string | null>(null);
 
   // Step 3 State: Passkey
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
@@ -111,16 +119,36 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
     return () => clearInterval(timer);
   }, []);
 
-  // Check existing session status on mount
-  useEffect(() => {
-    fetch("/api/session")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.verified) setWorldVerified(true);
-        if (data?.name) setClaimedEns(data.name);
-      })
-      .catch(() => {});
+  const [readinessError, setReadinessError] = useState("");
+  const [resumeError, setResumeError] = useState("");
+  const checkReadiness = useCallback(async () => {
+    try {
+      if (!window.isSecureContext || !window.PublicKeyCredential) throw new Error("Use a secure browser with passkey support to create your credential.");
+      const response = await fetch("/api/onboarding/readiness", { cache: "no-store" });
+      if (!response.ok) throw new Error("We couldn't check setup availability. Please retry.");
+      const data = await response.json();
+      if (!data.ready) throw new Error("HumanProof signup is temporarily unavailable. Please retry.");
+      setReadinessError("");
+      return true;
+    } catch (error) {
+      setReadinessError(error instanceof Error ? error.message : "HumanProof signup is temporarily unavailable. Please retry.");
+      return false;
+    }
   }, []);
+  const resume = useCallback(async () => {
+    if (!ready) return;
+    if (!authenticated) return;
+    setResumeError("");
+    try {
+      const response = await authedFetch("/api/onboarding/resume", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not restore your setup. Please retry.");
+      setWorldVerified(Boolean(data.verified)); setClaimedEns(data.name ?? null);
+      if (data.pendingName) setEnsLabel(data.pendingName.replace(/\.humanproof\.eth$/, ""));
+      await refreshHumanSession();
+    } catch (error) { setResumeError(error instanceof Error ? error.message : "Could not restore setup."); }
+  }, [ready, authenticated, authedFetch, refreshHumanSession]);
+  useEffect(() => { const timer = setTimeout(() => { void resume(); }, 0); return () => clearTimeout(timer); }, [resume]);
 
   const walletAddress = user?.wallet?.address;
   const hasPasskey = user?.linkedAccounts?.some((account) => account.type === "passkey") ?? false;
@@ -158,7 +186,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
         colors: ["#ffffff", "#2dd4bf", "#60a5fa", "#a78bfa"],
         disableForReducedMotion: true,
       });
-      toast.success("Credential successfully minted on-chain!");
+      toast.success("Your HumanProof credential is ready.");
     }
   }, [currentStep]);
 
@@ -172,8 +200,9 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
   async function startWorldVerification() {
     setWorldStatus("preparing");
     setWorldError(null);
+    worldServerError.current = null;
     try {
-      const res = await fetch("/api/world/sign", { method: "POST" });
+      const res = await authedFetch("/api/world/sign", { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data?.rp_context) {
         throw new Error(data?.error || "Could not prepare verification context.");
@@ -198,11 +227,15 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data?.error || "Verification failed.");
+      const message = data?.error || "Verification failed.";
+      worldServerError.current = message;
+      setWorldError(message);
+      throw new Error(message);
     }
   }
 
   function handleWorldSuccess() {
+    worldServerError.current = null;
     setWorldVerified(true);
     setWorldWidgetOpen(false);
     setWorldStatus("idle");
@@ -212,7 +245,8 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
 
   function handleWorldError(code: IDKitErrorCodes) {
     setWorldStatus("error");
-    const msg = `Verification didn't complete (${String(code)}).`;
+    const msg = worldServerError.current || `Verification didn't complete (${String(code)}).`;
+    worldServerError.current = null;
     setWorldError(msg);
     setWorldWidgetOpen(false);
     toast.error(msg);
@@ -264,9 +298,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
   }
 
   /**
-   * Abandon a half-finished setup and leave nothing behind: clear the verification cookie, sign out
-   * of the account, and reset the flow. Nothing is committed to HumanProof until the name is
-   * claimed, so this genuinely discards the attempt rather than half-hiding it.
+   * Pause setup: clear the verification cookie and sign out. Durable progress remains available.
    */
   async function startOver() {
     try {
@@ -289,7 +321,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
       setRpContext(null);
       attemptedWallet.current = false;
       await refreshHumanSession();
-      toast.success("Setup discarded — nothing was saved.");
+      toast.success("Setup paused. Sign back in to resume.");
     }
   }
 
@@ -369,7 +401,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
             <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start">
             {[
               { num: 1, label: "Account" },
-              { num: 2, label: "World ID" },
+              { num: 2, label: "Proof of Human" },
               { num: 3, label: "Passkey" },
               { num: 4, label: "ENS Name" },
             ].map((s, idx) => {
@@ -383,7 +415,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                       isCompleted
                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]"
                         : isCurrent
-                        ? "bg-white text-black font-bold ring-4 ring-white/20 shadow-md scale-105"
+                        ? "bg-white/20 text-white font-bold ring-4 ring-white/20 shadow-md scale-105"
                         : "bg-[#16161a] text-slate-500 border border-white/10"
                     }`}
                   >
@@ -407,6 +439,12 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
             })}
           </div>
         </div>
+
+        {(readinessError || resumeError) && (
+          <p role="alert" className="mb-5 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-300">
+            {readinessError || resumeError}
+          </p>
+        )}
 
         {/* Dynamic Animated Step Views with Spaced Typography */}
         <div className="my-auto flex flex-col justify-center">
@@ -432,7 +470,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                   </h2>
                   <p className="text-sm sm:text-base text-slate-400 font-normal leading-relaxed max-w-md">
                     {!codeSent
-                      ? "Prove you're human once without storing any personal data."
+                      ? "Prove you're human once. Reuse your HumanProof credential."
                       : `We sent a 6-digit verification code to ${email}`}
                   </p>
                 </div>
@@ -442,7 +480,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                   <form
                     onSubmit={async (e) => {
                       e.preventDefault();
-                      if (!email) return;
+                      if (!email || !await checkReadiness()) return;
                       await sendCode({ email });
                       toast.success(`Verification code sent to ${email}`);
                     }}
@@ -573,25 +611,26 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                     <span>Step 2 of 4 · Proof of Human</span>
                   </div>
                   <h2 className="font-heading mb-3 text-[2rem] font-normal leading-[1.08] tracking-tight text-white sm:text-4xl sm:leading-[1.18]">
-                    World ID Selfie Check
+                    Verify your humanity
                   </h2>
                   <p className="text-sm sm:text-base text-slate-400 font-normal leading-relaxed max-w-md">
-                    Verify you&apos;re a real, unique human once. Zero-knowledge proof — no photos, face, or biometrics are ever stored.
+                    Prove you&apos;re human once. Reuse your HumanProof credential.
                   </p>
                 </div>
 
+                {VERIFICATION_PROVIDER === 'self' ? <SelfVerify onVerified={resume} /> : <>
                 {/* Wallet Info Badge */}
                 <div className="bg-[#141418] border border-white/10 rounded-xl p-3.5 flex items-center justify-between text-xs mb-4">
                   <span className="text-slate-400">Embedded Wallet:</span>
                   <span className="text-slate-200 font-medium">
-                    {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : walletError || "provisioned"}
+                    {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : walletError || "Creating your wallet…"}
                   </span>
                 </div>
 
                 {/* Verification Trigger Button */}
                 <button
                   onClick={startWorldVerification}
-                  disabled={worldStatus === "preparing" || worldStatus === "verifying"}
+                  disabled={!walletAddress || worldStatus === "preparing" || worldStatus === "verifying"}
                   className="w-full bg-white text-black font-semibold text-sm py-3.5 rounded-xl hover:bg-slate-100 active:scale-[0.99] transition-all duration-200 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {worldStatus === "preparing" ? (
@@ -611,7 +650,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                 </button>
 
                 <p className="text-[11px] text-slate-500 leading-relaxed text-center mt-3">
-                  Uses World ID 3.0 Selfie Check. In staging mode, runs via browser simulator.
+                  Uses World ID 3.0 Selfie Check. HumanProof stores the proof result, never your photo or biometric data.
                 </p>
 
                 {worldError && (
@@ -639,6 +678,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
                     <MobileWorldSimulatorLink open={worldWidgetOpen} />
                   </>
                 )}
+                </>}
               </motion.div>
             )}
 
@@ -750,7 +790,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
 
                 <button
                   type="submit"
-                  disabled={claimingEns || !ensLabel.trim()}
+                  disabled={claimingEns || !ensLabel.trim() || !walletAddress || Boolean(resumeError)}
                   className="w-full bg-white text-black font-semibold text-sm py-3.5 rounded-xl hover:bg-slate-100 active:scale-[0.99] transition-all duration-200 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {claimingEns ? (
@@ -824,7 +864,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
           </AnimatePresence>
         </div>
 
-        {/* Escape hatch: nothing is committed until the name is claimed, so leaving is clean. */}
+        {/* Signing out preserves durable setup progress for the same account. */}
         {authenticated && currentStep < 5 && (
           <div className="pt-4 text-center">
             <button
@@ -832,7 +872,7 @@ export function OnboardingCard({ onClose }: { onClose?: () => void } = {}) {
               onClick={startOver}
               className="text-[11px] font-medium text-slate-400 underline underline-offset-4 transition-colors hover:text-white"
             >
-              Start over
+              Sign out and resume later
             </button>
           </div>
         )}

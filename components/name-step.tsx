@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuthedFetch } from "@/components/use-authed-fetch";
 
 const PARENT = "humanproof.eth";
 
@@ -23,6 +24,7 @@ export function NameStep({
   /** The owning Privy account (DID). Recorded with the credential so a passkey re-login can find it. */
   privyUserId?: string;
 }) {
+  const authedFetch = useAuthedFetch();
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
   const [claimed, setClaimed] = useState<{ name: string; resolved: string | null } | null>(null);
@@ -32,7 +34,7 @@ export function NameStep({
     setError(null);
     setBusy(true);
     try {
-      const res = await fetch("/api/ens/claim", {
+      const res = await authedFetch("/api/ens/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label, address, privyUserId }),

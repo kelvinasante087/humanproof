@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { readBoundSession } from "@/lib/account-session";
 import { createDemoSession, demoCookie, hasDemoSession, isDemoApp } from "@/lib/demo/session";
+import { getCredentialByPrivyUser } from "@/lib/db";
 
 type Context = { params: Promise<{ app: string }> };
 export async function GET(request: Request, context: Context) {
@@ -17,6 +18,9 @@ export async function POST(request: Request, context: Context) {
   if (!isDemoApp(app)) return NextResponse.json({ error: "Unknown app" }, { status: 404 });
   const bound = await readBoundSession(request);
   if (!bound) return NextResponse.json({ error: "Sign in with HumanProof first." }, { status: 401 });
+  try {
+    if (!await getCredentialByPrivyUser(bound.privyUserId)) return NextResponse.json({ error: "Complete your HumanProof credential first." }, { status: 403 });
+  } catch { return NextResponse.json({ error: "Could not check your credential. Retry shortly." }, { status: 503 }); }
   (await cookies()).set(demoCookie(app), createDemoSession(app, bound.privyUserId), {
     httpOnly: true, secure: process.env.NODE_ENV === "production",
     sameSite: "lax", path: "/", maxAge: 3600,

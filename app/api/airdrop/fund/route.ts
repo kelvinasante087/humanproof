@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { parseEther, getAddress } from "viem";
 import { readBoundSession } from "@/lib/account-session";
+import { verifiedAccountDetails } from "@/lib/privy-auth";
+import { getCredentialByPrivyUser } from "@/lib/db";
 import { saltedNullifierHash } from "@/lib/ens/registrar";
 import { sealPublicClient, getSealWallet } from "@/lib/seal/config";
 import { dbConfigured, recordGasFunding, GasFundingBlockedError } from "@/lib/db";
@@ -31,6 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Verify you're human first." }, { status: 401 });
   }
   const { session } = bound;
+  if (!dbConfigured()) return NextResponse.json({ error: "Gas funding is unavailable." }, { status: 503 });
 
   let body: { address?: unknown };
   try {
@@ -45,6 +48,14 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Missing or invalid wallet address." }, { status: 400 });
   }
+  try {
+    const details = await verifiedAccountDetails(request, bound.privyUserId);
+    const credential = await getCredentialByPrivyUser(bound.privyUserId);
+    const fingerprint = session.nullifierHash ?? saltedNullifierHash(session.nullifier!).toString();
+    if (!details?.wallets.includes(address.toLowerCase()) || !credential || credential.nullifierHash !== fingerprint) {
+      return NextResponse.json({ error: "Use the embedded wallet belonging to your completed credential." }, { status: 403 });
+    }
+  } catch { return NextResponse.json({ error: "Could not validate your wallet." }, { status: 503 }); }
 
   // Don't spend a human's one-funding allowance on a wallet that already has gas.
   let balance: bigint;
@@ -86,7 +97,8 @@ export async function POST(request: Request) {
   try {
     const wallet = getSealWallet();
     const txHash = await wallet.sendTransaction({ to: address, value: GAS_TOPUP });
-    await sealPublicClient.waitForTransactionReceipt({ hash: txHash });
+    const receipt = await sealPublicClient.waitForTransactionReceipt({ hash: txHash });
+    if (receipt.status !== "success") throw new Error("Gas funding reverted");
     return NextResponse.json({ funded: true, txHash });
   } catch (err) {
     console.error("[airdrop/fund] top-up failed:", err);

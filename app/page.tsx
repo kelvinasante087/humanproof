@@ -153,7 +153,7 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Card 2: PROOF airdrop demo */}
+            {/* Card 2: Airdroppa PROOF campaign demo */}
             <div className="group relative flex min-h-[310px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#121215] p-6 transition-all duration-300 hover:border-white/20 sm:min-h-[380px] sm:rounded-[2.5rem] sm:p-10">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
@@ -161,7 +161,7 @@ export default function Page() {
                     <span className="font-heading text-lg font-bold">P</span>
                   </div>
                   <span className="font-heading text-2xl sm:text-3xl text-white">
-                    PROOF airdrop
+                    Airdroppa PROOF campaign
                   </span>
                 </div>
 
@@ -283,7 +283,7 @@ export default function Page() {
             <div className="flex flex-col gap-3">
               <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">Demos</span>
               <Link href="/reviews" className="text-slate-300 hover:text-white transition-colors font-medium">Reviews</Link>
-              <Link href="/airdrop" className="text-slate-300 hover:text-white transition-colors font-medium">PROOF airdrop</Link>
+              <Link href="/airdrop" className="text-slate-300 hover:text-white transition-colors font-medium">Airdroppa PROOF campaign</Link>
             </div>
 
             {/* Col 3: Legal */}

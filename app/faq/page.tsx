@@ -17,7 +17,7 @@ export default function FaqPage() {
       <ContentSection heading="What is HumanProof?">
         <p>
           A reusable proof-of-human layer. You prove once that you’re a real, unique person, and
-          any app can then check that fact without you verifying again. See{" "}
+          our two demos can reuse that credential in the same environment. See{" "}
           <Link href="/how-it-works" className="underline underline-offset-2 hover:text-white">
             how it works
           </Link>
@@ -27,9 +27,10 @@ export default function FaqPage() {
 
       <ContentSection heading="Do you store my name, face, or ID?">
         <p>
-          No. The personhood check confirms you’re a unique human without uploading a photo, a
-          document, or your legal name. Apps that rely on HumanProof learn only that you’re a
-          verified human — never who you are.
+          HumanProof does not receive face images, legal names or ID documents. We do store your
+          chosen ENS name, account identifier, salted human fingerprint, unfinished setup and
+          receipts. Public reviews and chain activity may be linked to you. World handles the
+          personhood check; staging is active for the browser demo and Sandbox remains available for phone verification. The server pins each environment separately.
         </p>
       </ContentSection>
 
@@ -39,6 +40,12 @@ export default function FaqPage() {
           credential. That’s what lets the airdrop enforce one claim per person and the reviews app
           keep out review farms — the block is keyed to the person, not the wallet.
         </p>
+      </ContentSection>
+
+      <ContentSection heading="Can I read without HumanProof, and post more than once?">
+        <p>Yes. Proofit is readable without signing in, including by bots and AI agents. Ordinary
+          sign-in is available. Only posting needs HumanProof, and different posts about the same
+          product are allowed. Retrying identical content recovers its existing receipt.</p>
       </ContentSection>
 
       <ContentSection heading="Is this on mainnet? Is PROOF worth anything?">
@@ -55,7 +62,7 @@ export default function FaqPage() {
           <Link href="/developers" className="underline underline-offset-2 hover:text-white">
             developer page
           </Link>{" "}
-          shows how an app asks HumanProof whether a visitor is a verified, unique human.
+          explains the current same-origin API. An external SDK and cross-domain sign-in are future work.
         </p>
       </ContentSection>
     </ContentPage>

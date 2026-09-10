@@ -24,16 +24,17 @@ export default function PrivacyPage() {
       <ContentSection heading="What we deliberately don’t collect">
         <p>
           We don’t ask for or store your legal name, your face, or any government ID. The personhood
-          check confirms uniqueness without those. Apps built on HumanProof learn only that you’re a
-          verified, unique human.
+          check confirms uniqueness without those. The current demos also expose public ENS names, wallet transactions and posts.
         </p>
       </ContentSection>
 
       <ContentSection heading="What is processed">
         <p>
-          To make the proof reusable, we keep a per-person identifier server-side and a record that
-          a given app action came from a verified human. An email address (if you sign in with one)
-          and an automatically-created embedded wallet address act as anchors for your credential.
+          We store a salted human fingerprint, its World environment, the owning Privy account,
+          your chosen ENS name and avatar, unfinished setup, public reviews and action receipts.
+          Privy handles your email sign-in and embedded wallet. We do not persist raw World proofs
+          or raw nullifiers. Public chain events reuse a salted fingerprint across the demos, so
+          activity is pseudonymous and linkable. Signing out keeps your progress for recovery.
         </p>
       </ContentSection>
 

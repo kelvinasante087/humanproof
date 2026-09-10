@@ -11,7 +11,7 @@
  * Server-only. Fails closed: no token, no cookie, or a mismatch between them all return null.
  */
 import { cookies } from "next/headers";
-import { WORLD_SESSION_COOKIE } from "@/app/api/world/verify/route";
+import { HUMAN_SESSION_COOKIE as WORLD_SESSION_COOKIE } from "@/lib/verification/config";
 import { readSessionForAccount, type Session } from "@/lib/session";
 import { verifyPrivyUserId } from "@/lib/privy-auth";
 

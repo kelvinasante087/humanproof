@@ -1,0 +1,9 @@
+"An action recorded by the HumanProof sealing contract. No credential status claim."
+type Receipt @entity(immutable: true) {
+  id: Bytes!
+  contentHash: Bytes!
+  appId: String!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+}

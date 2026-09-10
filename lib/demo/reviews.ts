@@ -40,7 +40,7 @@ export const REVIEW_ITEMS: ReviewItem[] = [
   },
 ];
 
-/** Seed reviews shown as already-posted (verified). Only Aurora has seeds, per the prep. */
+/** Fictional sample reviews, visibly labelled and without verified badges. Only Aurora has seeds, per the prep. */
 export const SEED_REVIEWS: Record<string, SeedReview[]> = {
   "aurora-headphones": [
     {
@@ -60,6 +60,6 @@ export const SEED_REVIEWS: Record<string, SeedReview[]> = {
 export const REVIEWS_APP_ID = "reviews";
 
 /** The content string sealed for one review. The /attest route hashes it to a bytes32 on-chain. */
-export function reviewContentHash(itemId: string, body: string): string {
-  return `${REVIEWS_APP_ID}:${itemId}:${body}`;
+export function reviewContentHash(itemId: string, body: string, stars = 5): string {
+  return JSON.stringify({ app: REVIEWS_APP_ID, itemId, body: body.trim(), stars });
 }

@@ -1,90 +1,33 @@
-# HumanProof — Architecture
+> Current update (September 10): World ID staging is the active demo provider so the browser simulator can complete onboarding; approved Sandbox configuration remains preserved for the phone path. Self remains implemented as a parked fallback. The Graph receipt network is implemented locally. See docs/self-integration.md and docs/receipt-network.md; older provider notes below are historical.
 
-HumanProof is a **verified-human layer**: verify once, get a reusable credential, and any app can require it to keep out bots. The demo is a reviews app where only verified humans can post. This document is the build blueprint.
+# HumanProof architecture — current implementation
 
-## What it stands on
+The current behavior and privacy limits are documented in [README.md](README.md). Earlier day specifications record historical decisions; they do not override this document.
 
-HumanProof consumes two engines. It does not rebuild them.
+## Credential lifecycle
 
-- **World ID (Selfie Check)** proves a real, unique human. No Orb required.
-- **Sealing engine** anchors attestations onchain on Base, called as an external API.
+Readiness check → Privy account → World verification → durable unfinished setup → linked passkey → ENS name reservation → signed name transaction → confirmed receipt → durable credential.
 
-Everything HumanProof builds is the glue between them: the registration flow, the attest API, and the verify page.
+The unfinished record stores only the salted fingerprint, Privy account identifier, World environment, verification time and optional pending name/wallet/transaction. It survives closing the tab and signing out. A fresh account cannot adopt another account's pending or completed credential. Transient failures show retryable states; a successful transaction is reconciled instead of blindly retried. Recovery never fabricates a name from an unresolved ENS lookup.
 
-## Config (public identifiers, safe to commit)
+Browser API requests use a Privy bearer token plus an HMAC-signed, account-bound session cookie. New cookies contain the salted fingerprint, not the raw nullifier. Session/credential World environments must match the running application. Before creating a credential or authorizing a payout, the server verifies Privy's signed identity token for the linked wallet/passkey.
 
-- App ID: `app_b9bfc014a67b34d3d17d1184f1118007`
-- RP ID: `rp_830cfa817576dbc4`
-- Action: `verify-human`
-- Signer (public address): `0x29612032e817Ff2617D4467D9bc76AEd50f98966`
+## Backend boundary
 
-Secrets that NEVER go in this repo (kept in a gitignored `.env`):
+Convex database functions use internal query/mutation registration. An allowlisted HTTP action accepts a server-only bearer secret. The secret is not a browser credential and is never included in function arguments or logs. Next.js derives user identifiers from verified authentication; it does not accept claimed account ownership from request bodies.
 
-- the RP signer private key
-- the World API key
-- the sealing engine API key
+Credential uniqueness is enforced transactionally in Convex and by the ENS registrar's humanity-voucher ledger. All account-link operations reject ownership reassignment.
 
-## Flow 1 — Registration (mint the credential)
+## Two placements of the same credential
 
-1. User signs up with Privy: email or a social login, and they get an embedded wallet. No MetaMask, no seed phrase, nothing to scare a normal person off.
-2. They hit "Verify to join". The frontend runs World ID through IDKit with `action: "verify-human"`, and they complete Selfie Check in the World App.
-3. World hands back a zero-knowledge proof and a nullifier, an anonymous unique-human id. No personal data.
-4. The backend verifies that proof against World and checks the nullifier hasn't been seen before, so one human means one credential.
-5. A device passkey (WebAuthn) is bound to this human. One person, one device.
-6. They pick a username, which is an ENS name, and I mint a pairwise DID: a different DID per app, so nobody can track them across apps.
-7. The credential is anchored through the sealing engine (nullifier, DID, timestamp). Nothing private is stored.
+Proofit: public read/search and ordinary email accounts; only posting is gated. Multiple posts per product are allowed. Each different post has a different content hash; retrying the same action is idempotent.
 
-Result: a reusable, privacy-preserving "verified human" credential.
+Airdroppa: HumanProof gates entry to a 500 PROOF campaign. Issuer-signed EIP-712 vouchers bind a claim identifier to a wallet, chain, token deployment and deadline. The contract marks a claim consumed only when the mint succeeds. Proof sealing follows the payout and can retry independently.
 
-## Flow 2 — Attest (the pluggable API)
+## Evidence and limits
 
-One endpoint any app can call.
+ENS runs on Sepolia; payouts and action attestations run on Base Sepolia. The public verification page reads the stored receipt and links its on-chain transaction. The trusted server attests that it verified World; contracts do not verify a World ZK proof themselves.
 
-`POST /attest`
-- Input: a verified-human session (the credential) plus a hash of the action's content.
-- Backend: confirm the session is a verified human, then seal an attestation: `{ nullifier, contentHash, timestamp, appId }`.
-- Output: an attestation id and its onchain reference.
+Staging simulator reachability is not Selfie Sandbox access. Sandbox access was approved on September 8, but the first end-to-end verification is still pending. Partner checks are readiness snapshots and cannot guarantee the next request.
 
-This single endpoint IS the pluggable layer. The review app is simply its first caller.
-
-## Flow 3 — Verify (public)
-
-`GET /verify/:attestationId`
-- Returns proof that a verified unique human did this, at this time, from the sealed attestation.
-- Reveals no identity and no raw content.
-- Stretch: reads from a Graph subgraph that indexes the onchain attestations.
-
-## Showcase — fake-proof reviews
-
-- Posting a review requires the credential. The backend calls `/attest` with a hash of the review, and the review shows a "verified human" badge linking to `/verify`.
-- One human, one review per item, enforced through the nullifier and DID.
-- A bot with no World ID cannot post at all.
-
-## Data model
-
-- **Onchain (via the seal):** only attestations, nullifier plus content hash plus timestamp. Anonymous.
-- **Off-chain (app database):** username, review text, passkey credential, DID mapping.
-- **Never stored anywhere:** raw biometrics or personal identity. World returns a proof, not data.
-
-## Tech stack (planned)
-
-- Frontend: Next.js (React), Privy for onboarding and the embedded wallet, `@worldcoin/idkit`, WebAuthn for passkeys, ENS for usernames.
-- Backend: Next.js API routes, handling World proof verification, attest, and verify.
-- Sealing: the engine's API on Base.
-- Stretch: a Graph subgraph over the attestations, and a Chainlink function in the verify path.
-
-## Prize targets
-
-- **World** — Selfie Check (real human, abuse prevention). The one I have to win.
-- **ENS** — the username is an ENS name.
-- **Privy** — onboarding and the embedded wallet.
-- **The Graph** — a subgraph over the attestations.
-- **Chainlink** — a function in the verify path.
-- **Finalist** — a reusable primitive with a clean demo and a "works anywhere" vision.
-
-## Rules we build by
-
-- From scratch. All project code is written during ETHOnline (September 4 to 16).
-- Public repo, frequent small commits.
-- Secrets live in `.env` only, never committed.
-- Demo video: 2 to 4 minutes, 720p or better, real voice, no music.
+On-chain human fingerprints are shared across these demo apps and are linkable. Pairwise identities, strict device binding and cross-domain SSO are not built. No face/ID/proof/raw nullifier is stored by HumanProof, but pseudonymous account, name and transaction records are retained.

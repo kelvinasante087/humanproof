@@ -53,7 +53,7 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[id]">) 
     return (
       <Shell>
         <div className="w-full rounded-2xl border border-white/10 bg-[#0c0c0e] p-6 text-center shadow-sm">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-white/65">
             The verification store is being provisioned. This link will show its proof once the
             layer is live.
           </p>
@@ -70,7 +70,7 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[id]">) 
       <Shell>
         <div className="w-full rounded-2xl border border-white/10 bg-[#0c0c0e] p-8 text-center shadow-sm">
           <h1 className="text-lg font-semibold">Nothing sealed here</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-white/65">
             We couldn&apos;t find a sealed action for that reference.
           </p>
         </div>
@@ -94,47 +94,46 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[id]">) 
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-3xl text-white shadow-sm">
             ✓
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-            A real, unique human did this.
+          <h1 className="text-xl font-semibold tracking-tight text-white">
+            HumanProof recorded this action.
           </h1>
-          <p className="text-sm leading-relaxed text-slate-600">
-            No name, no face,{" "}
-            <span className="font-medium text-slate-800">nothing about who they are</span> — just
-            proof a real person acted.
+          <p className="text-sm leading-relaxed text-white/65">
+            This receipt records an action accepted by HumanProof. It does not establish that the content is true or human-written.
           </p>
         </div>
 
         {/* Details */}
         <dl className="divide-y">
           <div className="flex items-center justify-between gap-4 px-8 py-3.5 text-sm">
-            <dt className="text-slate-500">What</dt>
-            <dd className="text-right font-medium text-slate-800">{appPhrase(seal.appId)}</dd>
+            <dt className="text-white/55">What</dt>
+            <dd className="text-right font-medium text-white/90">{appPhrase(seal.appId)}</dd>
           </div>
           <div className="flex items-center justify-between gap-4 px-8 py-3.5 text-sm">
-            <dt className="text-slate-500">When</dt>
-            <dd className="text-right font-medium text-slate-800">{when} UTC</dd>
+            <dt className="text-white/55">When</dt>
+            <dd className="text-right font-medium text-white/90">{when} UTC</dd>
           </div>
           <div className="flex items-center justify-between gap-4 px-8 py-3.5 text-sm">
-            <dt className="text-slate-500">Network</dt>
-            <dd className="text-right font-medium text-slate-800">Base Sepolia</dd>
+            <dt className="text-white/55">Network</dt>
+            <dd className="text-right font-medium text-white/90">Base Sepolia</dd>
           </div>
         </dl>
 
         {/* Receipt */}
         <div className="border-t border-white/10 bg-white/[0.03] px-8 py-6">
-          <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
-            The trustless receipt
+          <p className="text-xs font-medium tracking-wide text-white/55 uppercase">
+            The on-chain receipt
           </p>
-          <p className="mt-1.5 text-sm text-slate-600">
+          <p className="mt-1.5 text-sm text-white/65">
             Don&apos;t take our word for it — the seal is anchored on Base, checkable by anyone.
           </p>
           {seal.txHash ? (
-            <p className="mt-2 font-mono text-xs break-all text-slate-500">{shortHash(seal.txHash)}</p>
+            <p className="mt-2 font-mono text-xs break-all text-white/55">{shortHash(seal.txHash)}</p>
           ) : (
-            <p className="mt-2 text-sm text-slate-500">On-chain transaction is being confirmed.</p>
+            <p className="mt-2 text-sm text-white/55">On-chain transaction is being confirmed.</p>
           )}
           <div className="mt-4">
             <VerifyActions explorer={explorer} />
+            <Link href="/verify" className="mt-4 block text-sm text-white underline">Explore receipts and check content</Link>
           </div>
         </div>
       </div>

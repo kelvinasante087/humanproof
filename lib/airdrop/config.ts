@@ -1,7 +1,7 @@
 // Client-safe airdrop config. Contains NO secrets — only the public PROOF token address (bundling a
 // contract address in client code is fine), the claim amount, the chain, and small read helpers.
 // The token address is empty until scripts/airdrop/01-deploy-proof.mjs deploys and fills it.
-import { createPublicClient, http, formatUnits, formatEther, encodeFunctionData, parseAbi, getAddress } from "viem";
+import { createPublicClient, http, formatUnits, formatEther, parseAbi, getAddress } from "viem";
 import { baseSepolia } from "viem/chains";
 import state from "./proof.baseSepolia.json";
 
@@ -23,18 +23,12 @@ export const PROOF_TOKEN = state.token ? getAddress(state.token) : undefined;
 
 /** True once the airdrop token is deployed and the demo can run live. */
 export function airdropConfigured(): boolean {
-  return Boolean(PROOF_TOKEN);
+  return Boolean(PROOF_TOKEN && state.claimVersion === 2 && state.issuer);
 }
 
 const proofAbi = parseAbi([
-  "function claim()",
   "function balanceOf(address) view returns (uint256)",
 ]);
-
-/** Calldata for ProofToken.claim() — the transaction the user's embedded wallet sends. */
-export function claimCalldata(): `0x${string}` {
-  return encodeFunctionData({ abi: proofAbi, functionName: "claim" });
-}
 
 const client = createPublicClient({ chain: baseSepolia, transport: http() });
 
@@ -62,5 +56,6 @@ export async function nativeBalanceOf(address: string): Promise<string> {
 
 /** Wait for a claim transaction to confirm on Base Sepolia. */
 export async function waitForClaim(hash: `0x${string}`): Promise<void> {
-  await client.waitForTransactionReceipt({ hash });
+  const receipt = await client.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") throw new Error("Payout reverted. Your allocation is still available.");
 }

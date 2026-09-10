@@ -22,10 +22,8 @@ import {
   CLAIM_CONTENT,
   CLAIM_AMOUNT_DISPLAY,
   PROOF_SYMBOL,
-  PROOF_TOKEN,
   BASE_SEPOLIA_ID,
   airdropConfigured,
-  claimCalldata,
   proofBalanceOf,
   waitForClaim,
 } from "@/lib/airdrop/config";
@@ -46,7 +44,7 @@ function AirdropDashboard() {
             <span className="grid h-9 w-9 place-items-center rounded-xl border border-emerald-300/30 bg-emerald-300/10 font-heading text-sm">
               P
             </span>
-            <span className="font-heading text-lg">ProofDrop</span>
+            <span className="font-heading text-lg">Airdroppa</span>
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] opacity-65 sm:inline-flex">
@@ -182,58 +180,35 @@ function Claim() {
     setStatus("claiming");
     setMessage(null);
 
-    let seal: { sealId?: string; error?: unknown } = {};
     try {
-      const response = await authedFetch("/api/attest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appId: AIRDROP_APP_ID, contentHash: CLAIM_CONTENT }),
+      const response = await authedFetch("/api/airdrop/claim", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address }),
       });
-      seal = await response.json();
-      if (response.status === 409) {
-        const duplicate = "Already claimed. HumanProof allows one 500 PROOF allocation per human.";
-        setStatus("blocked");
-        setMessage(duplicate);
-        window.alert(duplicate);
-        return;
-      }
-      if (response.status === 401) {
-        setStatus("error");
-        setMessage("Your HumanProof session needs to be verified again.");
-        return;
-      }
-      if (!response.ok) {
-        setStatus("error");
-        setMessage(seal.error ? String(seal.error) : "Could not seal this claim.");
-        return;
-      }
-      if (seal.sealId) setSealId(seal.sealId);
-    } catch {
-      setStatus("error");
-      setMessage("Network error — please try again.");
-      return;
-    }
-
-    try {
-      const transaction = { to: PROOF_TOKEN!, data: claimCalldata(), chainId: BASE_SEPOLIA_ID };
-      let hash: `0x${string}`;
-      try {
-        ({ hash } = await sendTransaction(transaction, { sponsor: true, address }));
-      } catch {
-        await authedFetch("/api/airdrop/fund", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address }),
+      const authorization = await response.json();
+      if (!response.ok) throw new Error(authorization.error || "Could not check your allocation.");
+      if (!authorization.claimed) {
+        const transaction = { to: authorization.to as `0x${string}`, data: authorization.data as `0x${string}`, chainId: BASE_SEPOLIA_ID };
+        // Fund before opening the wallet prompt. A cancelled prompt never triggers another request.
+        const gas = await authedFetch("/api/airdrop/fund", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address }),
         });
-        ({ hash } = await sendTransaction(transaction, { address }));
+        const { hash } = await sendTransaction(transaction, gas.ok ? { address } : { sponsor: true, address });
+        await waitForClaim(hash);
       }
-      await waitForClaim(hash);
       await refreshBalance();
       setStatus("done");
-      setMessage(`${CLAIM_AMOUNT_DISPLAY} ${PROOF_SYMBOL} landed in your wallet.`);
-    } catch {
+      setMessage(authorization.claimed ? "Your 500 PROOF allocation has already been paid. No second payout was sent." : `${CLAIM_AMOUNT_DISPLAY} ${PROOF_SYMBOL} landed in your wallet.`);
+      // The confirmed contract claim is authoritative. A failed seal can be retried separately.
+      const sealResponse = await authedFetch("/api/attest", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appId: AIRDROP_APP_ID, contentHash: CLAIM_CONTENT }),
+      });
+      const seal = await sealResponse.json();
+      if (sealResponse.ok && seal.sealId) setSealId(seal.sealId);
+      else setMessage("Your payout is confirmed. Click Check claim again to retry its proof receipt; you will not be paid twice.");
+    } catch (error) {
       setStatus("error");
-      setMessage("Your claim was sealed, but the payout transaction did not complete.");
+      setMessage(error instanceof Error ? error.message : "The transaction did not complete. Check claim again to recover; only a confirmed payout uses your allocation.");
     }
   }
 
@@ -295,7 +270,7 @@ function Claim() {
           ? "Claiming…"
           : !address
             ? "Preparing wallet…"
-            : `Claim ${CLAIM_AMOUNT_DISPLAY} ${PROOF_SYMBOL}`}
+            : status === "done" || status === "error" ? "Check claim again" : `Claim ${CLAIM_AMOUNT_DISPLAY} ${PROOF_SYMBOL}`}
         {status !== "claiming" && address && <ArrowUpRight className="h-4 w-4" />}
       </button>
 

@@ -12,29 +12,29 @@ export default function HowItWorksPage() {
   return (
     <ContentPage
       title="How it works"
-      intro="Prove you're a real, unique person once. Reuse that proof everywhere, without ever showing an app your name, face, or documents."
+      intro="Create a human credential, then reuse it to post on Proofit and enter Airdroppa."
     >
       <ContentSection heading="1 · Prove you're human, once">
         <p>
-          You complete a personhood check with World and secure it with a passkey on your
-          device — a fingerprint or face scan that never leaves your phone or laptop. No name, no
-          photo, and no ID document is uploaded or stored.
+          First we check that the required services are available. You sign in, complete the
+          configured World check, add a passkey and choose an ENS name. HumanProof does not
+          receive your face image. World Selfie Check is active in staging for this browser demo; the approved Sandbox app remains available for the phone path.
         </p>
       </ContentSection>
 
       <ContentSection heading="2 · Get a reusable credential">
         <p>
-          That check mints a HumanProof credential tied to a per-person secret. An embedded wallet
-          is created for you automatically as an anchor — there’s nothing to fund and no seed
-          phrase to write down.
+          Your credential links the verified fingerprint to your account and chosen ENS name.
+          Privy creates an embedded wallet. If you leave midway, sign back into the same account
+          to resume. A credential is complete only after its name transaction and saved record succeed.
         </p>
       </ContentSection>
 
       <ContentSection heading="3 · Reuse it across apps">
         <p>
-          When an app asks &ldquo;is this a real, unique human?&rdquo;, HumanProof answers yes or no.
-          The app learns that one fact and nothing else — not who you are. Because the proof is
-          reusable, you never have to verify again.
+          A returning account restores its credential without repeating the World step in the
+          same environment. Proofit gates posting; Airdroppa gates entry and one payout. Public
+          names and chain records can be linked. Passkeys may sync across your devices.
         </p>
       </ContentSection>
 
@@ -46,7 +46,7 @@ export default function HowItWorksPage() {
           </Link>{" "}
           where only verified humans can post (keeping out fake-review farms), and a{" "}
           <Link href="/airdrop" className="underline underline-offset-2 hover:text-white">
-            PROOF airdrop
+            Airdroppa PROOF campaign
           </Link>{" "}
           where each person can claim once (keeping out bot farms). Verify in one, and the other
           already recognises you.

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./reviews.module.css";
-import { DemoAccess } from "@/components/demo-access";
+import { ProofitAccess } from "@/components/proofit-access";
 import Link from "next/link";
 import {
   ArrowBigDown,
@@ -19,8 +19,6 @@ import { useAuthedFetch } from "@/components/use-authed-fetch";
 import {
   REVIEW_ITEMS,
   SEED_REVIEWS,
-  REVIEWS_APP_ID,
-  reviewContentHash,
   type SeedReview,
 } from "@/lib/demo/reviews";
 
@@ -46,7 +44,7 @@ function VerifiedBadge({ sealId }: { sealId?: string }) {
 }
 
 export default function ReviewsPage() {
-  return <DemoAccess app="reviews"><ReviewsFeed /></DemoAccess>;
+  return <ReviewsFeed />;
 }
 
 function ReviewsFeed() {
@@ -92,12 +90,14 @@ function ReviewsFeed() {
         </aside>
 
         <section className="min-w-0 space-y-4">
+          <input aria-label="Search reviews on mobile" placeholder="Search reviews" value={query} onChange={(event) => setQuery(event.target.value)} className={`${styles.search} sm:hidden`} />
           <div className="overflow-hidden rounded-xl border border-white/10 bg-[#111318]">
             <div className="border-b border-white/10 px-5 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-45">h/verifiedreviews</p>
               <h1 className="mt-1 font-heading text-3xl">Reviews worth reading.</h1>
             </div>
             <div className="p-3">
+              <ProofitAccess />
               <HumanSessionBanner appLabel="Proofit" />
             </div>
           </div>
@@ -152,10 +152,21 @@ function ItemThread({
   blurb: string;
   score: number;
 }) {
-  const { verified, name: humanName } = useHumanSession();
+  const { verified, credentialed, name: humanName } = useHumanSession();
   const seeds = SEED_REVIEWS[id] ?? [];
   const [posted, setPosted] = useState<PostedReview[]>([]);
   const [vote, setVote] = useState(0);
+  const [loadError, setLoadError] = useState("");
+  const [reload, setReload] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/reviews?itemId=${encodeURIComponent(id)}`).then(async response => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not load posts.");
+      if (!cancelled) { setPosted(current => [...current, ...data.reviews.filter((review: PostedReview) => !current.some(post => post.sealId === review.sealId))]); setLoadError(""); }
+    }).catch(error => { if (!cancelled) setLoadError(error.message); });
+    return () => { cancelled = true; };
+  }, [id, reload]);
   const commentCount = seeds.length + posted.length;
 
   return (
@@ -189,16 +200,17 @@ function ItemThread({
           ))}
         </div>
 
+          {loadError && <p role="status" className="p-3 text-xs">{loadError} <button className="underline" onClick={() => setReload(n => n + 1)}>Retry</button></p>}
         <details className="group mt-5 border-t border-white/10 pt-4">
           <summary className="inline-flex cursor-pointer list-none items-center gap-2 text-xs font-semibold opacity-70 marker:hidden [&::-webkit-details-marker]:hidden">
             <MessageCircle className="h-4 w-4" />
             {commentCount} {commentCount === 1 ? "comment" : "comments"} · Join the discussion
           </summary>
-          <ReviewForm
+      <ReviewForm
             itemId={id}
-            verified={verified}
+            verified={verified && credentialed === true}
             authorName={humanName}
-            onPosted={(review) => setPosted((current) => [...current, review])}
+            onPosted={(review) => setPosted((current) => [review, ...current.filter(post => post.sealId !== review.sealId)])}
           />
         </details>
       </div>
@@ -223,7 +235,7 @@ function ReviewComment({
         </span>
         <span className="font-mono text-xs font-semibold">{review.author}</span>
         {sample && <span className="text-[9px] uppercase tracking-[0.12em] opacity-35">Sample</span>}
-        <VerifiedBadge sealId={sealId} />
+        {!sample && <VerifiedBadge sealId={sealId} />}
       </div>
       <div className="ml-9 mt-2">
         <Stars n={review.stars} />
@@ -236,7 +248,6 @@ function ReviewComment({
 function ReviewForm({
   itemId,
   verified,
-  authorName,
   onPosted,
 }: {
   itemId: string;
@@ -252,26 +263,25 @@ function ReviewForm({
     useHumanProofSignIn();
   const authedFetch = useAuthedFetch();
 
-  async function doPost(author: string) {
+  async function doPost() {
     setPosting(true);
     try {
-      const response = await authedFetch("/api/attest", {
+      const response = await authedFetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          appId: REVIEWS_APP_ID,
-          contentHash: reviewContentHash(itemId, body),
+          itemId, body, stars,
         }),
       });
       const data = await response.json();
       if (response.ok) {
-        onPosted({ author, stars, body, sealId: data.sealId });
+        onPosted(data.review);
         setBody("");
         setStars(5);
         return;
       }
       if (response.status === 401) setError("Only a verified human can post.");
-      else if (response.status === 409) setError("You already reviewed this item as this human.");
+      else if (response.status === 409) setError("This exact post is already sealed. You can share another post about this product.");
       else setError(data.error || "Could not post that review.");
     } catch {
       setError("Network error — please try again.");
@@ -283,11 +293,11 @@ function ReviewForm({
   async function submit() {
     setError(null);
     if (verified) {
-      await doPost(authorName ?? "verified-human");
+      await doPost();
       return;
     }
     const result = await signIn();
-    if (result.ok) await doPost(result.name ?? authorName ?? "verified-human");
+    if (result.ok) await doPost();
   }
 
   const busy = posting || signingIn;

@@ -73,7 +73,7 @@ export function DemoAccess({ app, children }: {
   if (account && allowedAccount === account) {
     return <>
       <div className={styles.sessionBar}>
-        <span>Signed in to {reviews ? "Proofit" : "ProofDrop"} with HumanProof</span>
+        <span>Signed in to {reviews ? "Proofit" : "Airdroppa"} with HumanProof</span>
         <button onClick={() => void leave()}>Sign out of app</button>
         {failure && <span role="alert">{failure}</span>}
       </div>
@@ -86,7 +86,7 @@ export function DemoAccess({ app, children }: {
       <header>
         <Link href={`/${app}`} className={styles.brand}>
           {reviews ? <MessageCircle size={28} /> : <span className={styles.token}>P</span>}
-          {reviews ? "proofit" : "ProofDrop"}
+          {reviews ? "proofit" : "Airdroppa"}
         </Link>
         <Link href="/account">Your HumanProof credential <ArrowRight size={15} /></Link>
       </header>
@@ -104,7 +104,7 @@ export function DemoAccess({ app, children }: {
         </section>
         <section className={styles.login}>
           <Fingerprint size={35} />
-          <h2>{reviews ? "Welcome to Proofit" : "Sign in to ProofDrop"}</h2>
+          <h2>{reviews ? "Welcome to Proofit" : "Sign in to Airdroppa"}</h2>
           <p>Use your existing HumanProof passkey to continue.</p>
           <button className={styles.primary} onClick={() => void enter()} disabled={!ready || checking || busy || opening}>
             {!ready || checking ? "Checking session…" : busy || opening ? "Complete your passkey prompt…" : "Sign in with HumanProof"}

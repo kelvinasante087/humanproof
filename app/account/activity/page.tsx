@@ -18,7 +18,7 @@ type Seal = {
 
 function actionTitle(appId: string) {
   if (appId === "reviews") return "Posted a review";
-  if (appId === "airdrop") return "Claimed the PROOF airdrop";
+  if (appId === "airdrop") return "Claimed the Airdroppa PROOF campaign";
   return "Sealed an action";
 }
 
@@ -97,7 +97,7 @@ export default function ActivityPage() {
               <Gift className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-white">PROOF airdrop</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Airdroppa PROOF campaign</p>
               <h2 className="mt-1 font-heading text-xl text-white">
                 {airdropStatus}
               </h2>

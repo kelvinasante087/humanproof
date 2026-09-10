@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, getIdentityToken } from "@privy-io/react-auth";
 
 /**
  * `fetch`, with proof of WHICH account is calling.
@@ -23,6 +23,8 @@ export function useAuthedFetch() {
       try {
         const token = await getAccessToken();
         if (token) headers.set("Authorization", `Bearer ${token}`);
+        const identity = await getIdentityToken();
+        if (identity) headers.set("privy-id-token", identity);
       } catch {
         // No token available (signed out / Privy not ready). Let the request go and be refused
         // server-side rather than failing silently here.

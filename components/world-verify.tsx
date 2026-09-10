@@ -10,6 +10,7 @@ import {
 import { WORLD_APP_ID, WORLD_ACTION, WORLD_ENV } from "@/lib/world";
 import { Button } from "@/components/ui/button";
 import { MobileWorldSimulatorLink } from "@/components/mobile-world-simulator-link";
+import { useAuthedFetch } from "@/components/use-authed-fetch";
 
 /**
  * The proof-of-human step. After sign-in, the user proves once (via World's
@@ -37,6 +38,7 @@ type RpContext = {
 type Status = "idle" | "preparing" | "verifying" | "verified" | "error";
 
 export function WorldVerify({ onVerified }: { onVerified?: () => void }) {
+  const authedFetch = useAuthedFetch();
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -48,7 +50,7 @@ export function WorldVerify({ onVerified }: { onVerified?: () => void }) {
     setStatus("preparing");
     setMessage(null);
     try {
-      const res = await fetch("/api/world/sign", { method: "POST" });
+      const res = await authedFetch("/api/world/sign", { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data?.rp_context) {
         throw new Error(data?.error || "Could not prepare verification.");
@@ -65,7 +67,7 @@ export function WorldVerify({ onVerified }: { onVerified?: () => void }) {
   // Runs before onSuccess. Throwing aborts to onError → nothing is granted.
   async function handleVerify(result: IDKitResult) {
     setStatus("verifying");
-    const res = await fetch("/api/world/verify", {
+    const res = await authedFetch("/api/world/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(result),

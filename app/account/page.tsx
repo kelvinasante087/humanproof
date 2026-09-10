@@ -84,7 +84,7 @@ export default function AccountPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* PROOF Airdrop / Sybil Pass Token */}
+              {/* Airdroppa / Sybil Pass Token */}
               <div className="p-4 rounded-2xl bg-[#0c0c0e] border border-white/10 hover:border-white/20 transition-all flex flex-col justify-between gap-3 group">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
