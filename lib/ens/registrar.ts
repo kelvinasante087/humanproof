@@ -54,10 +54,10 @@ export type ClaimResult = { name: string; label: string; nullifierHash: string; 
  * Claim <rawLabel>.humanproof.eth for `claimantAddr`, gated on-chain by a humanity voucher
  * derived from this session's World `nullifier`.
  */
-export async function claimViaRegistrar(rawLabel: string, claimantAddr: string, nullifier: string): Promise<ClaimResult> {
+export async function claimViaRegistrar(rawLabel: string, claimantAddr: string, fingerprint: bigint, onSent?: (hash: string) => Promise<void>): Promise<ClaimResult> {
   const claimant = getAddress(claimantAddr);
   const { name, label } = normalizeSubname(rawLabel, PARENT_NAME);
-  const nullifierHash = saltedNullifierHash(nullifier);
+  const nullifierHash = fingerprint;
   const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
 
   const signature = await getIssuer().signTypedData({
@@ -74,7 +74,9 @@ export async function claimViaRegistrar(rawLabel: string, claimantAddr: string, 
       args: [label, claimant, nullifierHash, deadline, signature],
     });
     const txHash = await wallet.writeContract(sim.request);
-    await publicClient.waitForTransactionReceipt({ hash: txHash });
+    await onSent?.(txHash);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 60000 });
+    if (receipt.status !== "success") throw new Error("Name transaction reverted");
     return { name, label, nullifierHash: nullifierHash.toString(), txHash };
   } catch (err) {
     let reverted: string | undefined;

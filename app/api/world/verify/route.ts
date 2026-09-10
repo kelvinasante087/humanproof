@@ -8,25 +8,13 @@ import {
   WorldEnvironmentMismatchError,
   NullifierNotFoundError,
 } from "@/lib/world";
-import { sealSession } from "@/lib/session";
+import { sealSessionFromHash } from "@/lib/session";
+import { saltedNullifierHash } from "@/lib/ens/registrar";
+import { saveProof } from "@/lib/onboarding";
 import { verifyPrivyUserId } from "@/lib/privy-auth";
+import { VERIFICATION_PROVIDER } from '@/lib/verification/config';
 
-/**
- * Verifies a World Selfie Check proof server-side and, on success, holds the
- * resulting nullifier in a locked-down session cookie.
- *
- * The whole trust boundary lives here:
- *  - Guard #1: reject a proof whose *claimed* environment isn't the one we're
- *    pinned to (staging), before we call anything.
- *  - Forward the proof as-is to World's verify endpoint.
- *  - Require success === true.
- *  - Guard #2: re-check the environment World *echoes back*.
- *  - Trust ONLY the nullifier World returns — never a value the browser sent —
- *    and fail loud if it's absent.
- *
- * Day 2 keeps the nullifier in session ONLY (this cookie). Nothing is written
- * to a database until the ENS step completes the flow (Day 4).
- */
+/** Verify the pinned World environment, save account-bound progress and issue a hash-only cookie. */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -39,6 +27,7 @@ export const WORLD_SESSION_COOKIE = "hp_world_nullifier";
 type Json = Record<string, unknown>;
 
 export async function POST(request: Request) {
+  if (VERIFICATION_PROVIDER !== 'world') return NextResponse.json({ error: 'This verification provider is inactive.' }, { status: 404 });
   const rpId = process.env.WORLD_RP_ID;
   if (!rpId) {
     return NextResponse.json(
@@ -93,6 +82,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers,
       body: JSON.stringify({ ...proof, action: WORLD_ACTION, environment: WORLD_ENV }),
+      signal: AbortSignal.timeout(20000),
     });
   } catch (err) {
     console.error("[world/verify] network error calling World verify:", err);
@@ -105,16 +95,44 @@ export async function POST(request: Request) {
   const body: Json = (await verifyRes.json().catch(() => ({}))) as Json;
 
   if (!verifyRes.ok || body.success !== true) {
-    console.warn("[world/verify] World rejected the proof:", verifyRes.status, body);
+    // Keep proof/nullifier data out of logs, but retain the verifier's safe
+    // diagnostic fields so a simulator/configuration failure is actionable.
+    const candidateCode =
+      typeof body.error_code === "string"
+        ? body.error_code
+        : typeof body.code === "string"
+          ? body.code
+          : undefined;
+    const safeCode = candidateCode && /^[A-Za-z0-9_.-]{1,64}$/.test(candidateCode)
+      ? candidateCode
+      : "unspecified";
+    console.warn("[world/verify] World rejected proof", {
+      status: verifyRes.status,
+      code: safeCode,
+      responseKeys: Object.keys(body).slice(0, 20),
+    });
+    let userMsg = "World rejected this proof. Start a fresh request and try again.";
+    if (safeCode === "max_verifications_reached") {
+      userMsg = "This World ID has already completed verification.";
+    } else if (safeCode === "invalid_action") {
+      userMsg = "World action mismatch. Please refresh and try again.";
+    } else if (safeCode === "expired") {
+      userMsg = "This verification session expired. Please scan and verify again.";
+    } else if (safeCode !== "unspecified") {
+      userMsg = `World rejected this proof (${safeCode}). Start a fresh request and try again.`;
+    }
     return NextResponse.json(
-      { verified: false, error: "World did not confirm the proof." },
+      {
+        verified: false,
+        error: userMsg,
+      },
       { status: 401 },
     );
   }
 
   // Guard #2 — re-check the environment World echoes back in its response.
   try {
-    if (typeof body.environment === "string") assertPinnedEnvironment(body.environment);
+    assertPinnedEnvironment(body.environment);
   } catch (err) {
     if (err instanceof WorldEnvironmentMismatchError) {
       return NextResponse.json({ verified: false, error: err.message }, { status: 400 });
@@ -128,7 +146,7 @@ export async function POST(request: Request) {
     nullifier = extractNullifier(body);
   } catch (err) {
     if (err instanceof NullifierNotFoundError) {
-      console.error("[world/verify]", err.message, body);
+      console.error("[world/verify]", err.message);
       return NextResponse.json(
         { verified: false, error: "Proof confirmed but no nullifier was returned." },
         { status: 502 },
@@ -137,12 +155,43 @@ export async function POST(request: Request) {
     throw err;
   }
 
-  // Session-only, locked down: httpOnly (never readable by JS), secure in prod,
-  // sameSite. The nullifier is the sensitive bit — it stays server-side, and the
-  // cookie value is HMAC-signed (sealSession) so a hand-crafted cookie can't forge
-  // a verified session. The raw nullifier is recoverable only server-side, via readSession.
+  // Persist the salted fingerprint before issuing a reusable session. Never persist raw proof data.
+  const fingerprint = saltedNullifierHash(nullifier).toString();
+  try {
+    await saveProof(privyUserId, fingerprint);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("HUMAN_ALREADY_BOUND")) {
+      return NextResponse.json(
+        {
+          verified: false,
+          error:
+            "This World ID is already linked to a HumanProof account. Sign out and use your HumanProof passkey to resume that account.",
+        },
+        { status: 409 },
+      );
+    }
+    if (message.includes("ACCOUNT_ALREADY_BOUND")) {
+      return NextResponse.json(
+        {
+          verified: false,
+          error:
+            "This HumanProof account is already linked to a different human proof. Sign out and resume the original account.",
+        },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json(
+      {
+        verified: false,
+        error:
+          "Could not save verification progress. Retry with the account that originally completed HumanProof.",
+      },
+      { status: 409 },
+    );
+  }
   const jar = await cookies();
-  jar.set(WORLD_SESSION_COOKIE, sealSession(nullifier, privyUserId), {
+  jar.set(WORLD_SESSION_COOKIE, sealSessionFromHash(fingerprint, privyUserId), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

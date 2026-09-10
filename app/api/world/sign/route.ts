@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { signRequest } from "@worldcoin/idkit-server";
 import { WORLD_ACTION } from "@/lib/world";
+import { provenAccount } from "@/lib/account-session";
+import { onboardingReadiness } from "@/lib/readiness";
+import { VERIFICATION_PROVIDER } from "@/lib/verification/config";
 
 /**
  * Signs an `rp_context` so the client can open the World Selfie Check widget.
@@ -15,7 +18,21 @@ import { WORLD_ACTION } from "@/lib/world";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(request: Request) {
+  if (VERIFICATION_PROVIDER !== "world") {
+    return NextResponse.json({ error: "This verification provider is inactive." }, { status: 404 });
+  }
+  if (!(await provenAccount(request))) {
+    return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  }
+  const health = await onboardingReadiness();
+  if (!health.ready) {
+    const failed = health.checks.find((c) => !c.ready);
+    return NextResponse.json(
+      { error: failed?.message || "Setup is temporarily paused. Your progress is saved; retry shortly." },
+      { status: 503 },
+    );
+  }
   const signingKeyHex = process.env.WORLD_RP_SIGNING_KEY;
   const rpId = process.env.WORLD_RP_ID;
 
@@ -23,8 +40,7 @@ export async function POST() {
     // Fail loud, not silent — a missing key must never look like a working flow.
     return NextResponse.json(
       {
-        error:
-          "World signing is not configured. Set WORLD_RP_SIGNING_KEY and WORLD_RP_ID.",
+        error: "World signing is not configured. Set WORLD_RP_SIGNING_KEY and WORLD_RP_ID.",
       },
       { status: 500 },
     );

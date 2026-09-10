@@ -1,12 +1,23 @@
 // Server-side ENS v2 config: clients, addresses, ABIs, roles. Reads the worker key
 // (SEPOLIA_DEPLOYER_PRIVATE_KEY) — import ONLY from server code (API routes), never client.
-import { createPublicClient, createWalletClient, http, getAddress, parseAbi } from "viem";
+import { createPublicClient, createWalletClient, http, fallback, getAddress, parseAbi } from "viem";
 import { sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import deployments from "./deployments.sepolia.json";
 import state from "./humanproof.sepolia.json";
 
-const RPC = process.env.SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
+const userRpc = process.env.SEPOLIA_RPC_URL;
+const rpcList = [
+  ...(userRpc ? [userRpc] : []),
+  "https://ethereum-sepolia-rpc.publicnode.com",
+  "https://rpc.sepolia.org",
+  "https://1rpc.io/sepolia",
+  "https://sepolia.gateway.tenderly.co",
+];
+
+const transport = fallback(
+  rpcList.map((url) => http(url, { timeout: 15_000, retryCount: 2 }))
+);
 
 /** On-chain-verified addresses (see deployments.sepolia.json + FEEDBACK.md). */
 export const ADDR = {
@@ -19,14 +30,14 @@ export const ADDR = {
 export const PARENT_NAME = state.parentName; // "humanproof.eth"
 export const ZERO_ADDR = "0x0000000000000000000000000000000000000000" as const;
 
-export const publicClient = createPublicClient({ chain: sepolia, transport: http(RPC) });
+export const publicClient = createPublicClient({ chain: sepolia, transport });
 
 /** Worker/deployer wallet client — the operational signer. Server-only. */
 export function getWalletClient() {
   const pk = process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY;
   if (!pk) throw new Error("SEPOLIA_DEPLOYER_PRIVATE_KEY is not set");
   const account = privateKeyToAccount(pk as `0x${string}`);
-  return createWalletClient({ account, chain: sepolia, transport: http(RPC) });
+  return createWalletClient({ account, chain: sepolia, transport });
 }
 
 export const registryAbi = parseAbi([
